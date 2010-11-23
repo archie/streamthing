@@ -18,11 +18,14 @@ public class Initialiser implements Control {
         streamThingPid = Configuration.getPid( prefix+".protocol");
     }
 
-    public boolean execute() {        
-    		Node randomNode = Network.get(CommonState.r.nextInt(Network.size()));
+	public boolean execute() {
+		if (CommonState.r.nextInt(10) > 5) {
+			Node randomNode = Network
+					.get(CommonState.r.nextInt(Network.size()));
 
-    		EDSimulator.add(0, new Message(MessageType.JOIN, CommonState.getNode()), randomNode, streamThingPid);
-    		
+			EDSimulator.add(0, new Message(MessageType.JOIN, CommonState
+					.getNode()), randomNode, streamThingPid);
+		}
         return false;
     }
 }

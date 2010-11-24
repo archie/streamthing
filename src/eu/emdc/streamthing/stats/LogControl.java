@@ -1,8 +1,15 @@
 package eu.emdc.streamthing.stats;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Iterator;
+import java.util.Map;
+
 import peersim.config.Configuration;
 import peersim.core.Control;
 import peersim.core.Network;
+import peersim.core.Node;
 
 public class LogControl implements Control {
 
@@ -17,8 +24,27 @@ public class LogControl implements Control {
 	
 	@Override
 	public boolean execute() {
-		this.accountingProtocol.writeTransportLogToFile(logfileName);
+		writeTransportLogToFile(logfileName);
 		return true;
+	}
+	
+	public void writeTransportLogToFile(String filename) {
+		System.out.println("writing " + accountingProtocol.getNodesData().size() + " items to file");
+		PrintWriter dataOutStream;
+		
+		try {
+			dataOutStream = new PrintWriter(new File(filename));
+			Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry pairs = (Map.Entry)it.next();
+				dataOutStream.print(pairs.getValue() + "\t" + ((Node)pairs.getKey()).getID());
+				dataOutStream.println();
+			}
+			
+			dataOutStream.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} 
 	}
 
 }

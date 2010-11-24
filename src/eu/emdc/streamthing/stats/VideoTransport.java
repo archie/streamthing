@@ -35,31 +35,17 @@ public class VideoTransport implements Transport {
 	@Override
 	public void send(Node src, Node dest, Object msg, int pid) {
 		if (nodeData.containsKey(src)) {
+			System.out.println("increase");
 			long current = nodeData.get(src);
 			nodeData.put(src, current + 1);
-		} else 
+		} else {
+			System.out.println("add");
 			nodeData.put(src, 1l);
+		}
+			
 
 		Transport t = (Transport) src.getProtocol(transport);
 		t.send(src, dest, msg, pid);
-	}
-	
-	public void writeTransportLogToFile(String filename) {
-		System.out.println("writing to file");
-
-		try {
-			dataOutStream = new PrintWriter(new File(filename));
-			Iterator it = nodeData.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry pairs = (Map.Entry)it.next();
-				dataOutStream.print(pairs.getValue() + "\t" + ((Node)pairs.getKey()).getID());
-				dataOutStream.println();
-			}
-			
-			dataOutStream.close();
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		} 
 	}
 
 	

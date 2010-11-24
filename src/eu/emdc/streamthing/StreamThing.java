@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import eu.emdc.streamthing.message.*;
+import eu.emdc.streamthing.stats.Debug;
 
 import peersim.cdsim.CDProtocol;
 import peersim.config.Configuration;
@@ -73,11 +74,11 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	}
 
 	private void joinMsg(Node node, int pid, Message join) {
-		System.out.println(join.toString());
+		Debug.info("Node: " + node.getID() + " got " + join.toString());
 	}
 
 	private void partMsg(Node node, int pid, Message part) {
-		System.out.println("Node leaves");
+		Debug.info(part.toString());
 	}
 
 	/* trigger methods */

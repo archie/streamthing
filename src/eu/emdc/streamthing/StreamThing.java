@@ -5,10 +5,14 @@ import java.util.Map;
 
 import eu.emdc.streamthing.message.*;
 
-
 import peersim.cdsim.CDProtocol;
+import peersim.config.FastConfig;
+import peersim.core.CommonState;
+import peersim.core.Linkable;
+import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
+import peersim.transport.Transport;
 
 public class StreamThing implements CDProtocol, EDProtocol {
 
@@ -18,10 +22,10 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		
 	/* implementation */
 	protected String prefix;
-	
+
 	private Map<Node, NodeConfig> routingTable;
 	private boolean loadConfig = true;
-	
+
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		//routingTable = NodeConfiguration.load(NODE_LATENCY, NODE_CAPACITY);
@@ -33,7 +37,7 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		temp = nodeConf.GetDelayTupleForNodePair(2, 2);
 		System.out.println(temp.GetMinDelay () + " " + temp.GetMaxDelay());
 	}
-	
+
 	@Override
 	public void nextCycle(Node node, int protocolID) {
 		if (loadConfig) {
@@ -45,7 +49,13 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	@Override
 	public void processEvent(Node node, int pid, Object event) {
 		if (event != null) {
+			if (event instanceof TriggerMessage) {
+				handleTrigger(node, (TriggerMessage) event, pid);
+				return;
+			}
+
 			Message msg = (Message) event;
+
 			switch (msg.type) {
 			case JOIN:
 				join(node, pid, msg);
@@ -57,22 +67,35 @@ public class StreamThing implements CDProtocol, EDProtocol {
 				break;
 			}
 		} else {
-			// ignore for now
+			// naaeh
 		}
 	}
-	
+
 	@Override
 	public Object clone() {
 		return this;
 	}
-	
-	/* private methods */
+
+	/* protocol methods */
 	private void join(Node node, int pid, Message join) {
 		System.out.println(join.toString());
 	}
-	
+
 	private void part(Node node, int pid, Message part) {
 		System.out.println("Node leaves");
 	}
+	
+	/* trigger methods */
+	private void handleTrigger(Node node, TriggerMessage msg, int pid) {
+		Transport transport = (Transport) node.getProtocol(FastConfig
+				.getTransport(pid));
+		if (msg.type == MessageType.JOIN) {
+			// ask random node to join
+			Node dest = Network.get(CommonState.r.nextInt(Network.size()));
+			transport.send(node, dest, new Message(MessageType.JOIN, node), pid);
+		} else {
+			// else ?? 
+		}
+		
+	}
 }
-

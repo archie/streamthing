@@ -32,7 +32,7 @@ public class Initialiser implements Control {
 	}
 
 	public boolean execute() {
-		while (this.events.size() > 0
+		if (this.events.size() > 0
 				&& CommonState.getTime() == this.events.peek()
 						.GetExecutionTime()) {
 			StreamEvent event = this.events.remove();

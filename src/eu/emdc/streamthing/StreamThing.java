@@ -19,7 +19,7 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	/* configuration keywords */
 	private static final String NODE_LATENCY = "node.latency";
 	private static final String NODE_CAPACITY = "node.capacity";
-
+		
 	/* implementation */
 	protected String prefix;
 
@@ -28,7 +28,14 @@ public class StreamThing implements CDProtocol, EDProtocol {
 
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
-		routingTable = NodeConfiguration.load(NODE_LATENCY, NODE_CAPACITY);
+		//routingTable = NodeConfiguration.load(NODE_LATENCY, NODE_CAPACITY);
+		NodeConfig nodeConf = new NodeConfig();
+		nodeConf.InitialiseLatencyMap("filelolz");
+		nodeConf.InitialiseUploadCapacity("uploadFile");
+		
+		DelayTuple temp = new DelayTuple();
+		temp = nodeConf.GetDelayTupleForNodePair(2, 2);
+		System.out.println(temp.GetMinDelay () + " " + temp.GetMaxDelay());
 	}
 
 	@Override

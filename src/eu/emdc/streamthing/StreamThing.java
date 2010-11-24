@@ -19,7 +19,7 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	/* configuration keywords */
 	private static final String NODE_LATENCY = ".latencyfile";
 	private static final String NODE_CAPACITY = ".capacityfile";
-
+	
 	/* implementation */
 	protected String prefix;
 
@@ -28,10 +28,7 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		NodeConfig nodeConf = new NodeConfig();
 		nodeConf.InitialiseLatencyMap(Configuration.getString(prefix + NODE_LATENCY));
 		nodeConf.InitialiseUploadCapacity(Configuration.getString(prefix + NODE_CAPACITY));
-
-		DelayTuple temp = nodeConf.GetDelayTupleForNodePair(0, 1);
-		if (temp != null)
-			System.out.println(temp.GetMinDelay() + " " + temp.GetMaxDelay());
+		
 	}
 
 	@Override
@@ -89,7 +86,7 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		Transport transport = (Transport) node.getProtocol(FastConfig
 				.getTransport(pid));
 		
-		switch (msg.type) {
+		switch (msg.GetEventType()) {
 		case JOIN:
 			// ask random node to join (should be closest node... right?)
 			Node dest = Network.get(CommonState.r.nextInt(Network.size()));

@@ -22,8 +22,7 @@ public class Initialiser implements Control {
 		this.streamThingPid = Configuration.getPid(prefix + ".protocol");
 		
 		EventHelper eventHelper = new EventHelper();
-		//eventHelper.InitialiseEvents(Configuration.getString(prefix + EVENTS));
-		eventHelper.InitialiseEvents("eventSample");
+		eventHelper.InitialiseEvents(Configuration.getString(prefix + EVENTS));
 		
 		this.events = eventHelper.GetEventQueue();
 
@@ -42,6 +41,7 @@ public class Initialiser implements Control {
 				break;
 			case FAIL:
 				Network.remove(event.GetNodeId ());
+				System.err.println("LogControl: Removing node " + event.GetNodeId());
 				break;
 			case LEAVE:
 				EDSimulator.add(0, event, Network.get(event.GetNodeId ()), streamThingPid);

@@ -22,7 +22,6 @@ public class PacketLoss implements Transport {
 	@Override
 	public void send(Node src, Node dest, Object msg, int pid) {
 		// pass on for now
-		System.out.println("hej");
 		Transport t = (Transport) src.getProtocol(transport);
 		t.send(src, dest, msg, pid);
 	}

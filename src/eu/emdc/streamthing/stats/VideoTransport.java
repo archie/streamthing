@@ -35,15 +35,12 @@ public class VideoTransport implements Transport {
 	@Override
 	public void send(Node src, Node dest, Object msg, int pid) {
 		if (nodeData.containsKey(src)) {
-			System.out.println("increase");
 			long current = nodeData.get(src);
 			nodeData.put(src, current + 1);
 		} else {
-			System.out.println("add");
 			nodeData.put(src, 1l);
 		}
 			
-
 		Transport t = (Transport) src.getProtocol(transport);
 		t.send(src, dest, msg, pid);
 	}

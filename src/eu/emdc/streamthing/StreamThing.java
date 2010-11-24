@@ -6,9 +6,9 @@ import java.util.Map;
 import eu.emdc.streamthing.message.*;
 
 import peersim.cdsim.CDProtocol;
+import peersim.config.Configuration;
 import peersim.config.FastConfig;
 import peersim.core.CommonState;
-import peersim.core.Linkable;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
@@ -17,33 +17,26 @@ import peersim.transport.Transport;
 public class StreamThing implements CDProtocol, EDProtocol {
 
 	/* configuration keywords */
-	private static final String NODE_LATENCY = "node.latency";
-	private static final String NODE_CAPACITY = "node.capacity";
-		
+	private static final String NODE_LATENCY = ".latencyfile";
+	private static final String NODE_CAPACITY = ".capacityfile";
+
 	/* implementation */
 	protected String prefix;
 
-	private Map<Node, NodeConfig> routingTable;
-	private boolean loadConfig = true;
-
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
-		//routingTable = NodeConfiguration.load(NODE_LATENCY, NODE_CAPACITY);
 		NodeConfig nodeConf = new NodeConfig();
-		nodeConf.InitialiseLatencyMap("filelolz");
-		nodeConf.InitialiseUploadCapacity("uploadFile");
-		
-		DelayTuple temp = new DelayTuple();
-		temp = nodeConf.GetDelayTupleForNodePair(2, 2);
-		System.out.println(temp.GetMinDelay () + " " + temp.GetMaxDelay());
+		nodeConf.InitialiseLatencyMap(Configuration.getString(prefix + NODE_LATENCY));
+		nodeConf.InitialiseUploadCapacity(Configuration.getString(prefix + NODE_CAPACITY));
+
+		DelayTuple temp = nodeConf.GetDelayTupleForNodePair(0, 1);
+		if (temp != null)
+			System.out.println(temp.GetMinDelay() + " " + temp.GetMaxDelay());
 	}
 
 	@Override
 	public void nextCycle(Node node, int protocolID) {
-		if (loadConfig) {
-			System.out.println("Loading node configuration");
-			loadConfig = false;
-		}
+		// where running event driven
 	}
 
 	@Override
@@ -54,8 +47,8 @@ public class StreamThing implements CDProtocol, EDProtocol {
 				return;
 			}
 			if (event instanceof Message) {
-				handleMessage(node, (Message)event, pid);
-				return; 
+				handleMessage(node, (Message) event, pid);
+				return;
 			}
 		} else {
 			// naaeh
@@ -69,36 +62,54 @@ public class StreamThing implements CDProtocol, EDProtocol {
 
 	/* protocol methods */
 	private void handleMessage(Node node, Message msg, int pid) {
+		/* delegate to protocol message handler */ 
 		switch (msg.type) {
 		case JOIN:
-			join(node, pid, msg);
+			joinMsg(node, pid, msg);
 			break;
 		case PART:
-			part(node, pid, msg);
+			partMsg(node, pid, msg);
 			break;
 		default:
 			break;
 		}
 	}
-	private void join(Node node, int pid, Message join) {
+
+	private void joinMsg(Node node, int pid, Message join) {
 		System.out.println(join.toString());
 	}
 
-	private void part(Node node, int pid, Message part) {
+	private void partMsg(Node node, int pid, Message part) {
 		System.out.println("Node leaves");
 	}
-	
+
 	/* trigger methods */
 	private void handleTrigger(Node node, StreamEvent msg, int pid) {
+		/* delegate to simulation event handler */
 		Transport transport = (Transport) node.getProtocol(FastConfig
 				.getTransport(pid));
-		if (msg.type == StreamEventType.JOIN) {
-			// ask random node to join
+		
+		switch (msg.type) {
+		case JOIN:
+			// ask random node to join (should be closest node... right?)
 			Node dest = Network.get(CommonState.r.nextInt(Network.size()));
 			transport.send(node, dest, new Message(MessageType.JOIN, node), pid);
-		} else {
-			// else ?? 
+			break;
+		case LEAVE:
+			// notify my friends I'm leaving
+			break;
+		case PUBLISH:
+			// do publish
+			break;
+		case SUBSCRIBE:
+			// do subscribe
+			break;
+		case UNSUBSCRIBE:
+			// do unsubscribe
+			break;
+		default:
+			break;
 		}
-		
+
 	}
 }

@@ -29,7 +29,7 @@ public class LogControl implements Control {
 	}
 	
 	public void writeTransportLogToFile(String filename) {
-		System.out.println("writing " + accountingProtocol.getNodesData().size() + " items to file");
+		System.err.println("LogControl: writing " + accountingProtocol.getNodesData().size() + " items to file");
 		PrintWriter dataOutStream;
 		
 		try {

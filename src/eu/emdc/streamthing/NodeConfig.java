@@ -48,9 +48,9 @@ public class NodeConfig {
 			
 			scanner.close();
 		}
-		catch (Exception e)
+		catch (IOException ioerr)
 		{
-			System.err.println("Screw you guys, I'm going home.");
+			ioerr.printStackTrace();
 		}
 		
 	}
@@ -80,9 +80,9 @@ public class NodeConfig {
 				N--;
 			}
 		}
-		catch (Exception e)
+		catch (IOException ioerr)
 		{
-			System.err.println("Error: InitialiseUploadCapacity");
+			ioerr.printStackTrace();
 		}
 	}
 	

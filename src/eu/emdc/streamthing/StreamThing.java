@@ -49,22 +49,13 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	@Override
 	public void processEvent(Node node, int pid, Object event) {
 		if (event != null) {
-			if (event instanceof TriggerMessage) {
-				handleTrigger(node, (TriggerMessage) event, pid);
+			if (event instanceof StreamEvent) {
+				handleTrigger(node, (StreamEvent) event, pid);
 				return;
 			}
-
-			Message msg = (Message) event;
-
-			switch (msg.type) {
-			case JOIN:
-				join(node, pid, msg);
-				break;
-			case PART:
-				part(node, pid, msg);
-				break;
-			default:
-				break;
+			if (event instanceof Message) {
+				handleMessage(node, (Message)event, pid);
+				return; 
 			}
 		} else {
 			// naaeh
@@ -77,6 +68,18 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	}
 
 	/* protocol methods */
+	private void handleMessage(Node node, Message msg, int pid) {
+		switch (msg.type) {
+		case JOIN:
+			join(node, pid, msg);
+			break;
+		case PART:
+			part(node, pid, msg);
+			break;
+		default:
+			break;
+		}
+	}
 	private void join(Node node, int pid, Message join) {
 		System.out.println(join.toString());
 	}
@@ -86,10 +89,10 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	}
 	
 	/* trigger methods */
-	private void handleTrigger(Node node, TriggerMessage msg, int pid) {
+	private void handleTrigger(Node node, StreamEvent msg, int pid) {
 		Transport transport = (Transport) node.getProtocol(FastConfig
 				.getTransport(pid));
-		if (msg.type == MessageType.JOIN) {
+		if (msg.type == StreamEventType.JOIN) {
 			// ask random node to join
 			Node dest = Network.get(CommonState.r.nextInt(Network.size()));
 			transport.send(node, dest, new Message(MessageType.JOIN, node), pid);

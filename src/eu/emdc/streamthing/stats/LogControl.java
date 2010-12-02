@@ -25,6 +25,7 @@ public class LogControl implements Control {
 	@Override
 	public boolean execute() {
 		writeTransportLogToFile(logfileName);
+		System.out.println("Network size: " + Network.size());
 		return true;
 	}
 	

@@ -59,4 +59,12 @@ public class StreamEvent implements Comparable<StreamEvent>{
 		else
 			return -1;
 	}
+	
+	@Override 
+	public String toString() {
+		String s = m_type.toString() + " [" + m_nodeId + "]";
+		for (Float f : m_paramVector)
+			s += " " + f.toString();
+		return s;
+	}
 }

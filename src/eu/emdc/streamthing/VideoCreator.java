@@ -6,7 +6,9 @@ import peersim.transport.Transport;
 
 public class VideoCreator {
 	
-	private int m_streamID;
+	private float m_streamID; 
+	private float m_streamDuration; /* timeunits */
+	private float m_streamRate; /* packets / thousand_timeunits */
 	private NodeWorld m_world;
 	private Transport m_transport;
 	
@@ -14,6 +16,9 @@ public class VideoCreator {
 		m_world = world;
 		m_transport = transport;
 		/* parse pubEvent */
+		m_streamID = pubEvent.GetEventParams().get(0);
+		m_streamDuration = pubEvent.GetEventParams().get(1);
+		m_streamRate = pubEvent.GetEventParams().get(2);
 	}
 	
 	public void streamVideo(Node src, int pid) {

@@ -23,12 +23,21 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	
 	/* implementation */
 	protected String prefix;
+	private StreamManager m_streamManager;
+	private NodeWorld m_world;
+	private VideoCreator m_creator;
 
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
+		
+		// Read node config
 		NodeConfig nodeConf = new NodeConfig();
 		nodeConf.InitialiseLatencyMap(Configuration.getString(prefix + NODE_LATENCY));
 		nodeConf.InitialiseUploadCapacity(Configuration.getString(prefix + NODE_CAPACITY));
+		
+		// StreamThing helpers
+		m_world = new NodeWorld();
+		m_streamManager = new StreamManager(m_world);
 		
 	}
 
@@ -44,9 +53,15 @@ public class StreamThing implements CDProtocol, EDProtocol {
 				handleTrigger(node, (StreamEvent) event, pid);
 				return;
 			}
-			if (event instanceof Message) {
+			else if (event instanceof VideoMessage) {
+				m_streamManager.processVideoMessage(node, (VideoMessage) event);
+			}
+			else if (event instanceof Message) {
 				handleMessage(node, (Message) event, pid);
 				return;
+			}
+			else {
+				System.err.println("Unknown message!");
 			}
 		} else {
 			// naaeh
@@ -81,26 +96,35 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		Debug.info(part.toString());
 	}
 
-	/* trigger methods */
-	private void handleTrigger(Node node, StreamEvent msg, int pid) {
-		/* delegate to simulation event handler */
-		Transport transport = (Transport) node.getProtocol(FastConfig
+	/** 
+	 * Handle simulation events based on those specified in input file
+	 */
+	private void handleTrigger(Node src, StreamEvent msg, int pid) {
+		Transport transport = (Transport) src.getProtocol(FastConfig
 				.getTransport(pid));
-		
+		Debug.info("Parsing msg: " + msg.toString());
 		switch (msg.GetEventType()) {
 		case JOIN:
 			// ask random node to join (should be closest node... right?)
-			Node dest = Network.get(CommonState.r.nextInt(Network.size()));
-			transport.send(node, dest, new Message(MessageType.JOIN, node), pid);
+			Node dest = Network.get(CommonState.r.nextInt(Network.size())); 
+			transport.send(src, dest, new Message(MessageType.JOIN, src), pid);
 			break;
 		case LEAVE:
 			// notify my friends I'm leaving
 			break;
 		case PUBLISH:
-			// do publish
+			// hash stream id
+			// locate resp node
+			// send store ref to node
+			if (m_creator == null) {
+				m_creator = new VideoCreator(m_world, transport, msg);
+				Debug.info(src.getID() + " published a new stream");
+			}
+			m_creator.streamVideo(src, pid); // now only happens on publish - TODO: how to continuously do it to video ends?
 			break;
 		case SUBSCRIBE:
-			// do subscribe
+			// lookup(hash(stream_id))
+			
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe

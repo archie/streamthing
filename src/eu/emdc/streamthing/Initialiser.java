@@ -56,23 +56,10 @@ public class Initialiser implements Control {
 				Debug.control("NetworkControl: Removing node "
 						+ event.GetNodeId());
 				break;
-			case LEAVE:
-				EDSimulator.add(0, event, getNode(event.GetNodeId()),
-						streamThingPid);
-				break;
-			case PUBLISH:
-				// do stuff
-				break;
-			case UNSUBSCRIBE:
-				// do stuff
-				break;
-			case SUBSCRIBE:
-				// do stuff
-				break;
-			default:
-				// naaeh
+			default: /* all other events we can just go ahead and schedule */
+				EDSimulator.add(0, event, getNode(event.GetNodeId()), streamThingPid);
+				break; 
 			}
-
 		}
 
 		return false;

@@ -651,7 +651,6 @@ public class MSPastryProtocol implements Cloneable, EDProtocol {
      */
     public void processEvent(Node myNode, int myPid, Object event) {
 
-
         if (!cleaningScheduled) {
             long delay = 1000 + CommonState.r.nextLong(1000);
             Message service = new Message(Message.MSG_SERVICEPOLL, "");

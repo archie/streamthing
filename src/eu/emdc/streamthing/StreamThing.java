@@ -1,5 +1,6 @@
 package eu.emdc.streamthing;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
+import peersim.pastry.MSPastryCommonConfig;
 import peersim.pastry.MSPastryProtocol;
 import peersim.transport.Transport;
 
@@ -63,6 +65,9 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 			}
 			else if (event instanceof VideoMessage) {
 				m_streamManager.processVideoMessage(node, (VideoMessage) event);
+			}
+			else if (event instanceof StreamMessage) {
+				m_creator.streamVideo(node, pid);
 			}
 			else if (event instanceof Message) {
 				handleMessage(node, (Message) event, pid);
@@ -123,15 +128,19 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 			// hash stream id
 			// locate resp node
 			// send store ref to node
+			
 			if (m_creator == null) {
 				m_creator = new VideoCreator(m_world, transport, msg);
+				m_creator.scheduleStream(src, pid);
 				Debug.info(src.getID() + " published a new stream");
 			}
-			m_creator.streamVideo(src, pid); // now only happens on publish - TODO: how to continuously do it to video ends?
 			break;
 		case SUBSCRIBE:
 			// lookup(hash(stream_id))
+			/*peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
 			
+			Message subscribeMsg = new Message(MessageType.SUBSCRIBE, src);
+			transport.send(src, dest, subscribeMsg, pid);*/
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe
@@ -140,5 +149,6 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 			break;
 		}
 
+		
 	}
 }

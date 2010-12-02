@@ -1,7 +1,10 @@
 package eu.emdc.streamthing;
 
+import eu.emdc.streamthing.message.StreamMessage;
 import eu.emdc.streamthing.message.VideoMessage;
+import peersim.core.Network;
 import peersim.core.Node;
+import peersim.edsim.EDSimulator;
 import peersim.transport.Transport;
 
 public class VideoCreator {
@@ -15,21 +18,28 @@ public class VideoCreator {
 	public VideoCreator(NodeWorld world, Transport transport, StreamEvent pubEvent) {
 		m_world = world;
 		m_transport = transport;
-		/* parse pubEvent */
+		
+		// parse pubEvent 
 		m_streamID = pubEvent.GetEventParams().get(0);
 		m_streamDuration = pubEvent.GetEventParams().get(1);
 		m_streamRate = pubEvent.GetEventParams().get(2);
 	}
 	
+	public void scheduleStream(Node src, int pid) {
+		for (int i = 0; i < m_streamDuration; i++) {
+			StreamMessage sm = new StreamMessage();
+			EDSimulator.add(i, sm, src, pid);
+		}
+	}
+	
 	public void streamVideo(Node src, int pid) {
 		VideoMessage streamMsg;
 		/*
-		 * TODO: check max capacity (node config) 
-		 * TODO: check video length
+		 * TODO: check max upload capacity (node config) 
 		 */
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < m_streamRate; i++) {
 			streamMsg = new VideoMessage(src);
-			streamMsg.stream_id = 1;
+			streamMsg.stream_id = (int)m_streamID;
 			for (Node dest : m_world.getChildren())
 				m_transport.send(src, dest, streamMsg, pid);
 		}

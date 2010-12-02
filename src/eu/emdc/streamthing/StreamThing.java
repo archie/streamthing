@@ -18,7 +18,7 @@ import peersim.pastry.MSPastryCommonConfig;
 import peersim.pastry.MSPastryProtocol;
 import peersim.transport.Transport;
 
-public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProtocol {
+public class StreamThing implements CDProtocol, EDProtocol {
 
 	/* configuration keywords */
 	private static final String NODE_LATENCY = ".latencyfile";
@@ -31,7 +31,6 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 	private VideoCreator m_creator;
 
 	public StreamThing(String prefix) {
-		super (prefix);
 		this.prefix = prefix;
 		
 		// Read node config
@@ -42,6 +41,7 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 		// StreamThing helpers
 		m_world = new NodeWorld();
 		m_streamManager = new StreamManager(m_world);
+		
 		
 	}
 
@@ -55,7 +55,7 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 		
 		if (event instanceof peersim.pastry.Message)
 		{
-			super.processEvent(node, pid, event);
+			// lolz
 		}
 		else 
 		{
@@ -119,7 +119,6 @@ public class StreamThing extends MSPastryProtocol implements CDProtocol, EDProto
 			// ask random node to join (should be closest node... right?)
 			Node dest = Network.get(CommonState.r.nextInt(Network.size()));
 			transport.send(src, dest, new Message(MessageType.JOIN, src), pid);
-			join();
 			break;
 		case LEAVE:
 			// notify my friends I'm leaving

@@ -23,9 +23,7 @@ import peersim.transport.Transport;
 
 public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
-	/* configuration keywords */
-	private static final String NODE_LATENCY = ".latencyfile";
-	private static final String NODE_CAPACITY = ".capacityfile";
+	
 	
 	/* implementation */
 	protected String prefix;
@@ -69,10 +67,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		
-		// Read node config
-		NodeConfig nodeConf = new NodeConfig();
-		nodeConf.InitialiseLatencyMap(Configuration.getString(prefix + NODE_LATENCY));
-		nodeConf.InitialiseUploadCapacity(Configuration.getString(prefix + NODE_CAPACITY));
 		
 		// StreamThing helpers
 		m_world = new NodeWorld();
@@ -159,7 +153,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				
 				@Override
 				public void receive(Message m) {
-					handleMessage(m.src, m.dest, (StreamMessage)m.body);
+					//handleMessage(m.src, m.dest, (StreamMessage)m.body);
 					// TODO Auto-generated method stub
 					Object data = m.body;
 //					System.out.println("received message < " +

@@ -38,7 +38,7 @@ public class LogControl implements Control {
 			Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry)it.next();
-				dataOutStream.print(pairs.getValue() + "\t" + ((Node)pairs.getKey()).getID());
+				dataOutStream.print(pairs.getValue() + "\t" + pairs.getKey());
 				dataOutStream.println();
 			}
 			

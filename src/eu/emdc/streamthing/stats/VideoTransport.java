@@ -17,13 +17,13 @@ public class VideoTransport implements Transport {
 	private final int transport;
 	
 	private PrintWriter dataOutStream;
-	private Map<Node, Long> nodeData = new HashMap<Node, Long>();
+	private Map<Long, Long> nodeData = new HashMap<Long, Long>();
 	
 	public VideoTransport(String prefix) {
 		transport = Configuration.getPid(prefix+"."+PAR_TRANSPORT);
 	}
 	
-	public Map<Node,Long> getNodesData() {
+	public Map<Long,Long> getNodesData() {
 		return this.nodeData;
 	}
 	
@@ -34,11 +34,11 @@ public class VideoTransport implements Transport {
 
 	@Override
 	public void send(Node src, Node dest, Object msg, int pid) {
-		if (nodeData.containsKey(src)) {
-			long current = nodeData.get(src);
-			nodeData.put(src, current + 1);
+		if (nodeData.containsKey(src.getID())) {
+			long current = nodeData.get(src.getID());
+			nodeData.put(src.getID(), current + 1);
 		} else {
-			nodeData.put(src, 1l);
+			nodeData.put(src.getID(), 1l);
 		}
 			
 		Transport t = (Transport) src.getProtocol(transport);

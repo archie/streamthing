@@ -30,19 +30,35 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected NodeWorld m_world;
 	protected VideoCreator m_creator;
 	protected MSPastryProtocol m_pastry;
+	public int m_streamId;
 	
-	static public BigInteger GetPastryIdFromNodeId (int nodeid){
+	static public long GetNodeIdFromStreamId (int streamId){
+		for (int i = 0; i < Network.size(); i++)
+		{
+			StreamThing s = (StreamThing) Network.get(i).getProtocol(Configuration.lookupPid("streamthing"));
+			
+			if (s.m_streamId == streamId)
+			{
+				return Network.get(i).getID();
+			}
+		}
+		
+		return -1;
+	}
+	
+	static public BigInteger GetPastryIdFromNodeId (long nodeid){
 		for (int i = 0; i < Network.size(); i++)
 		{
 			if (Network.get(i).getID() == nodeid)
 			{
 				MSPastryProtocol p = (MSPastryProtocol) Network.get(i).getProtocol(Configuration.lookupPid("3mspastry"));
+			
 				return p.nodeId;
 			}
 		}
 		
 		return null;
-	} 
+	}
 	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
@@ -141,7 +157,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		Debug.info("Parsing msg: " + msg.toString());
 		switch (msg.GetEventType()) {
 		case JOIN:
-
+			m_streamId = msg.GetNodeId();
 			//System.out.println();
 			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
 			m_pastry.setListener(new MSPastryProtocol .Listener() {
@@ -151,12 +167,19 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					// TODO Auto-generated method stub
 					Object data = m.body;
 					System.out.println("received message < " +
-							data.toString() +
+							m.dest +
 							" > from address: "+ m.src);
 					
 				}
 			});
 			m_pastry.join();
+			
+			for (int i = 0; i < Network.size(); i++) {
+				Node n = Network.get(i);
+				StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
+				MSPastryProtocol p = (MSPastryProtocol) n.getProtocol(Configuration.lookupPid("3mspastry"));
+				System.out.println(s.m_streamId + " " + p.nodeId);
+			}
 			break;
 		case LEAVE:
 			;
@@ -177,7 +200,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
 			
 			Message subscribeMsg = new Message("zzz");
-			m_pastry.send(GetPastryIdFromNodeId(msg.GetEventParams().get(0).intValue()), subscribeMsg);
+			m_pastry.send(GetPastryIdFromNodeId(GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue())), subscribeMsg);
 			//transport.send(src, dest, subscribeMsg, pid);
 			break;
 		case UNSUBSCRIBE:

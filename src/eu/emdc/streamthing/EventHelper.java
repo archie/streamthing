@@ -66,11 +66,21 @@ public class EventHelper {
 					newEvent.SetEventType (StreamEventType.UNSUBSCRIBE);
 					vect.add (scanner.nextFloat()); // Stream ID
 				}
+				else if (et.equals("T")){
+					float x;
+					x = scanner.nextFloat();
+					x = scanner.nextFloat();
+					x = scanner.nextFloat();
+					x = scanner.nextFloat();
+				}
 				
-				newEvent.SetEventParams(vect);
+				if (!et.equals("T"))
+				{
+					newEvent.SetEventParams(vect);
 				
-				m_eventQueue.add (newEvent);
-				N--;
+					m_eventQueue.add (newEvent);
+					N--;
+				}
 			}
 		}
 		catch (Exception e)

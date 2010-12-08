@@ -52,12 +52,23 @@ public class Initialiser implements Control {
 
 				break;
 			case FAIL:
-				Network.remove(event.GetNodeId());
-				Debug.control("NetworkControl: Removing node "
-						+ event.GetNodeId());
+				
+				for (int i = 0; i < Network.size(); i++)
+				{
+					Node n = Network.get (i);
+					if (n.getID() == StreamThing.GetNodeIdFromStreamId(event.GetNodeId()))
+					{
+						Network.remove(i);
+						Debug.control("NetworkControl: Removing node "
+								+ i + " for streamId:" + event.GetNodeId());
+						break;
+					}
+				}
 				break;
 			default: /* all other events we can just go ahead and schedule */
-				EDSimulator.add(0, event, getNode(event.GetNodeId()), streamThingPid);
+				System.out.println(StreamThing.GetNodeIdFromStreamId(event.GetNodeId()));
+				
+				EDSimulator.add(0, event, getNode(StreamThing.GetNodeIdFromStreamId(event.GetNodeId())), streamThingPid);
 				break; 
 			}
 		}
@@ -65,7 +76,7 @@ public class Initialiser implements Control {
 		return false;
 	}
 
-	private Node getNode(int nodeID) {
+	private Node getNode(long nodeID) {
 		for (int i = 0; i < Network.size(); i++) {
 			if (Network.get(i).getID() == nodeID)
 				return Network.get(i);

@@ -154,7 +154,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	private void handleTrigger(Node src, StreamEvent msg, int pid) {
 		Transport transport = (Transport) src.getProtocol(FastConfig
 				.getTransport(pid));
-		Debug.info("Parsing msg: " + msg.toString());
+		Debug.info(src.getID() + "Parsing msg: " + msg.toString());
+				
 		switch (msg.GetEventType()) {
 		case JOIN:
 			m_streamId = msg.GetNodeId();
@@ -174,14 +175,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			});
 			m_pastry.join();
 			
-			for (int i = 0; i < Network.size(); i++) {
-				Node n = Network.get(i);
-				StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
-				MSPastryProtocol p = (MSPastryProtocol) n.getProtocol(Configuration.lookupPid("3mspastry"));
-				System.out.println(s.m_streamId + " " + p.nodeId);
-			}
 			break;
 		case LEAVE:
+			System.out.println("I actually enter this place");
 			;
 			break;
 		case PUBLISH:
@@ -200,8 +196,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
 			
 			Message subscribeMsg = new Message("zzz");
-			m_pastry.send(GetPastryIdFromNodeId(GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue())), subscribeMsg);
-			//transport.send(src, dest, subscribeMsg, pid);
+			if (GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue()) >= 0) 
+			{
+				m_pastry.send(GetPastryIdFromNodeId(GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue())), subscribeMsg);
+			}
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe
@@ -210,6 +208,14 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			break;
 		}
 
-		
+
+		for (int i = 0; i < Network.size(); i++)	
+		{
+			Node n = Network.get(i);
+			MSPastryProtocol p = (MSPastryProtocol) n.getProtocol(Configuration.lookupPid("3mspastry"));
+			StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
+			
+			System.out.println(n.getID() + " " + s.m_streamId + " " + p.nodeId);
+		}
 	}
 }

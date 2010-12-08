@@ -1,5 +1,7 @@
 package eu.emdc.streamthing;
 
+import java.math.BigInteger;
+
 import eu.emdc.streamthing.message.*;
 import eu.emdc.streamthing.stats.Debug;
 
@@ -13,9 +15,10 @@ import peersim.core.Node;
 import peersim.edsim.EDProtocol;
 import peersim.pastry.MSPastryCommonConfig;
 import peersim.pastry.MSPastryProtocol;
+import peersim.pastry.Message;
 import peersim.transport.Transport;
 
-public class StreamThing implements CDProtocol, EDProtocol {
+public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 	/* configuration keywords */
 	private static final String NODE_LATENCY = ".latencyfile";
@@ -23,11 +26,24 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	
 	/* implementation */
 	protected String prefix;
-	private StreamManager m_streamManager;
-	private NodeWorld m_world;
-	private VideoCreator m_creator;
-	private MSPastryProtocol m_pastry;
-
+	protected StreamManager m_streamManager;
+	protected NodeWorld m_world;
+	protected VideoCreator m_creator;
+	protected MSPastryProtocol m_pastry;
+	
+	static public BigInteger GetPastryIdFromNodeId (int nodeid){
+		for (int i = 0; i < Network.size(); i++)
+		{
+			if (Network.get(i).getID() == nodeid)
+			{
+				MSPastryProtocol p = (MSPastryProtocol) Network.get(i).getProtocol(Configuration.lookupPid("3mspastry"));
+				return p.nodeId;
+			}
+		}
+		
+		return null;
+	} 
+	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		
@@ -64,11 +80,11 @@ public class StreamThing implements CDProtocol, EDProtocol {
 			else if (event instanceof VideoMessage) {
 				m_streamManager.processVideoMessage(node, (VideoMessage) event);
 			}
+			//else if (event instanceof StreamMessage) {
+//				m_creator.streamVideo(node, pid);
+			//}
 			else if (event instanceof StreamMessage) {
-				m_creator.streamVideo(node, pid);
-			}
-			else if (event instanceof Message) {
-				handleMessage(node, (Message) event, pid);
+				handleMessage(node, (StreamMessage) event, pid);
 				return;
 			}
 			else {
@@ -79,11 +95,22 @@ public class StreamThing implements CDProtocol, EDProtocol {
 
 	@Override
 	public Object clone() {
-		return this;
+		StreamThing s = null;
+		try {
+			s = (StreamThing) super.clone();
+			s.m_pastry = null;
+			s.m_creator = null;
+			s.m_world = new NodeWorld();
+			s.m_streamManager = new StreamManager(s.m_world);
+			
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+        return s;
 	}
 
 	/* protocol methods */
-	private void handleMessage(Node node, Message msg, int pid) {
+	private void handleMessage(Node node, StreamMessage msg, int pid) {
 		/* delegate to protocol message handler */ 
 		switch (msg.type) {
 		case JOIN:
@@ -97,11 +124,11 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		}
 	}
 
-	private void joinMsg(Node node, int pid, Message join) {
-		Debug.info("Node: " + node.getID() + " got " + join.toString());
+	private void joinMsg(Node node, int pid, StreamMessage msg) {
+		Debug.info("Node: " + node.getID() + " got " + msg.toString());
 	}
 
-	private void partMsg(Node node, int pid, Message part) {
+	private void partMsg(Node node, int pid, StreamMessage part) {
 		Debug.info(part.toString());
 	}
 
@@ -114,8 +141,21 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		Debug.info("Parsing msg: " + msg.toString());
 		switch (msg.GetEventType()) {
 		case JOIN:
+
 			//System.out.println();
 			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
+			m_pastry.setListener(new MSPastryProtocol .Listener() {
+				
+				@Override
+				public void receive(Message m) {
+					// TODO Auto-generated method stub
+					Object data = m.body;
+					System.out.println("received message < " +
+							data.toString() +
+							" > from address: "+ m.src);
+					
+				}
+			});
 			m_pastry.join();
 			break;
 		case LEAVE:
@@ -134,10 +174,11 @@ public class StreamThing implements CDProtocol, EDProtocol {
 			break;
 		case SUBSCRIBE:
 			// lookup(hash(stream_id))
-			/*peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
+			peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
 			
-			Message subscribeMsg = new Message(MessageType.SUBSCRIBE, src);
-			transport.send(src, dest, subscribeMsg, pid);*/
+			Message subscribeMsg = new Message("zzz");
+			m_pastry.send(GetPastryIdFromNodeId(msg.GetEventParams().get(0).intValue()), subscribeMsg);
+			//transport.send(src, dest, subscribeMsg, pid);
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe

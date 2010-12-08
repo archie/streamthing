@@ -2,7 +2,7 @@ package eu.emdc.streamthing.message;
 
 import peersim.core.Node;
 
-public class VideoMessage extends Message {
+public class VideoMessage extends StreamMessage {
 
 	// video specifics here
 	public int stream_id;

@@ -26,10 +26,10 @@ public class VideoCreator {
 	}
 	
 	public void scheduleStream(Node src, int pid) {
-		for (int i = 0; i < m_streamDuration; i++) {
-			StreamMessage sm = new StreamMessage();
-			EDSimulator.add(i, sm, src, pid);
-		}
+		//for (int i = 0; i < m_streamDuration; i++) {
+//			StreamMessage sm = new StreamMessage();
+			//EDSimulator.add(i, sm, src, pid);
+		//}
 	}
 	
 	public void streamVideo(Node src, int pid) {

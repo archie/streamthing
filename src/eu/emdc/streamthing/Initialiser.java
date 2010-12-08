@@ -8,6 +8,7 @@ import eu.emdc.streamthing.stats.Debug;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
+import peersim.core.Fallible;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
@@ -20,6 +21,7 @@ public class Initialiser implements Control {
 	private int streamThingPid;
 	private boolean firstNode = true;
 	private Queue<StreamEvent> events;
+	private int initNodeCount = 0;
 
 	public Initialiser(String prefix) {
 		this.streamThingPid = Configuration.getPid(prefix + ".protocol");
@@ -40,14 +42,16 @@ public class Initialiser implements Control {
 			switch (event.GetEventType()) {
 			case JOIN:
 				Node node;
-				if (!firstNode) {
-					node = (Node) Network.prototype.clone();
-					Network.add(node);
-				} else {
-					node = Network.get(0);
-					firstNode = false;
-				}
+//				if (!firstNode) {
+//					node = (Node) Network.prototype.clone();
+//					Network.add(node);
+//				} else {
+//					node = Network.get(0);
+//					firstNode = false;
+//				}
 
+				node = Network.get(initNodeCount);
+				initNodeCount++;
 				EDSimulator.add(0, event, node, streamThingPid);
 
 				break;
@@ -58,7 +62,8 @@ public class Initialiser implements Control {
 					Node n = Network.get (i);
 					if (n.getID() == StreamThing.GetNodeIdFromStreamId(event.GetNodeId()))
 					{
-						Network.remove(i);
+						//Network.remove(i);
+						n.setFailState(Fallible.DEAD);
 						Debug.control("NetworkControl: Removing node "
 								+ i + " for streamId:" + event.GetNodeId());
 						break;

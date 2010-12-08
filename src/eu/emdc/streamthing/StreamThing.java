@@ -1,6 +1,8 @@
 package eu.emdc.streamthing;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import eu.emdc.streamthing.message.*;
 import eu.emdc.streamthing.stats.Debug;
@@ -16,6 +18,7 @@ import peersim.edsim.EDProtocol;
 import peersim.pastry.MSPastryCommonConfig;
 import peersim.pastry.MSPastryProtocol;
 import peersim.pastry.Message;
+import peersim.pastry.UniformRandomGenerator;
 import peersim.transport.Transport;
 
 public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
@@ -31,6 +34,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected VideoCreator m_creator;
 	protected MSPastryProtocol m_pastry;
 	public int m_streamId;
+	
+	static public Map< Integer, BigInteger> HashFunction = new HashMap<Integer, BigInteger>(); 
 	
 	static public long GetNodeIdFromStreamId (int streamId){
 		for (int i = 0; i < Network.size(); i++)
@@ -167,10 +172,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				public void receive(Message m) {
 					// TODO Auto-generated method stub
 					Object data = m.body;
-					System.out.println("received message < " +
-							m.dest +
-							" > from address: "+ m.src);
-					
+//					System.out.println("received message < " +
+//							m.dest + " " + data.toString() +
+//							" > from address: "+ m.src);
+//					
 				}
 			});
 			m_pastry.join();
@@ -185,21 +190,26 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// locate resp node
 			// send store ref to node
 			
-			if (m_creator == null) {
-				m_creator = new VideoCreator(m_world, transport, msg);
-				m_creator.scheduleStream(src, pid);
-				Debug.info(src.getID() + " published a new stream");
-			}
+//			if (m_creator == null) {
+//				m_creator = new VideoCreator(m_world, transport, msg);
+//				m_creator.scheduleStream(src, pid);
+//				Debug.info(src.getID() + " published a new stream");
+//			}
+					
+			Message createMsg = new Message("Create Msg received");
+			UniformRandomGenerator urg = new UniformRandomGenerator(
+                    MSPastryCommonConfig.BITS, CommonState.r);
+			BigInteger temp = urg.generate();
+			HashFunction.put(msg.GetEventParams().get(0).intValue(), temp);
+			System.out.println(temp);
+			m_pastry.send(temp, createMsg);
 			break;
 		case SUBSCRIBE:
-			// lookup(hash(stream_id))
-			peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
 			
-			Message subscribeMsg = new Message("zzz");
-			if (GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue()) >= 0) 
-			{
-				m_pastry.send(GetPastryIdFromNodeId(GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue())), subscribeMsg);
-			}
+			Message subscribeMsg = new Message("SUBSCRIBE ME LOLZ");
+			
+			m_pastry.send(HashFunction.get(msg.GetEventParams().get(0).intValue()), subscribeMsg);
+
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe
@@ -209,13 +219,13 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		}
 
 
-		for (int i = 0; i < Network.size(); i++)	
-		{
-			Node n = Network.get(i);
-			MSPastryProtocol p = (MSPastryProtocol) n.getProtocol(Configuration.lookupPid("3mspastry"));
-			StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
-			
-			System.out.println(n.getID() + " " + s.m_streamId + " " + p.nodeId);
-		}
+//		for (int i = 0; i < Network.size(); i++)	
+//		{
+//			Node n = Network.get(i);
+//			MSPastryProtocol p = (MSPastryProtocol) n.getProtocol(Configuration.lookupPid("3mspastry"));
+//			StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
+//			
+//			System.out.println(n.getID() + " " + s.m_streamId + " " + p.nodeId);
+//		}
 	}
 }

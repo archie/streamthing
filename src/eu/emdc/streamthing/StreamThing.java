@@ -60,6 +60,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		return null;
 	}
 	
+	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		
@@ -96,11 +97,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			else if (event instanceof VideoMessage) {
 				m_streamManager.processVideoMessage(node, (VideoMessage) event);
 			}
-			//else if (event instanceof StreamMessage) {
-//				m_creator.streamVideo(node, pid);
-			//}
+			else if (event instanceof PublishVideoEvent) {
+				m_creator.streamVideo(node, pid);
+			}
 			else if (event instanceof StreamMessage) {
-				handleMessage(node, (StreamMessage) event, pid);
+				//handleMessage(node, (StreamMessage) event, pid);
 				return;
 			}
 			else {
@@ -126,26 +127,14 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	}
 
 	/* protocol methods */
-	private void handleMessage(Node node, StreamMessage msg, int pid) {
-		/* delegate to protocol message handler */ 
+	private void handleMessage(BigInteger src, BigInteger dest, StreamMessage msg) {
 		switch (msg.type) {
-		case JOIN:
-			joinMsg(node, pid, msg);
-			break;
-		case PART:
-			partMsg(node, pid, msg);
+		case PUBLISH:
+			
 			break;
 		default:
 			break;
 		}
-	}
-
-	private void joinMsg(Node node, int pid, StreamMessage msg) {
-		Debug.info("Node: " + node.getID() + " got " + msg.toString());
-	}
-
-	private void partMsg(Node node, int pid, StreamMessage part) {
-		Debug.info(part.toString());
 	}
 
 	/** 
@@ -165,6 +154,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				
 				@Override
 				public void receive(Message m) {
+					handleMessage(m.src, m.dest, (StreamMessage)m.body);
 					// TODO Auto-generated method stub
 					Object data = m.body;
 					System.out.println("received message < " +
@@ -185,6 +175,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// locate resp node
 			// send store ref to node
 			
+			
 			if (m_creator == null) {
 				m_creator = new VideoCreator(m_world, transport, msg);
 				m_creator.scheduleStream(src, pid);
@@ -196,6 +187,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			peersim.pastry.Message lookup = peersim.pastry.Message.makeLookUp(1);
 			
 			Message subscribeMsg = new Message("zzz");
+			
 			if (GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue()) >= 0) 
 			{
 				m_pastry.send(GetPastryIdFromNodeId(GetNodeIdFromStreamId(msg.GetEventParams().get(0).intValue())), subscribeMsg);

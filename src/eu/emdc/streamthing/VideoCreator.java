@@ -1,6 +1,6 @@
 package eu.emdc.streamthing;
 
-import eu.emdc.streamthing.message.StreamMessage;
+import eu.emdc.streamthing.message.PublishVideoEvent;
 import eu.emdc.streamthing.message.VideoMessage;
 import peersim.core.Network;
 import peersim.core.Node;
@@ -26,10 +26,10 @@ public class VideoCreator {
 	}
 	
 	public void scheduleStream(Node src, int pid) {
-		//for (int i = 0; i < m_streamDuration; i++) {
-//			StreamMessage sm = new StreamMessage();
-			//EDSimulator.add(i, sm, src, pid);
-		//}
+		PublishVideoEvent pve = new PublishVideoEvent();
+		for (int i = 0; i < m_streamDuration; i++) {
+			EDSimulator.add(i, pve, src, pid);
+		}
 	}
 	
 	public void streamVideo(Node src, int pid) {

@@ -1,9 +1,5 @@
 package eu.emdc.streamthing;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-
 import eu.emdc.streamthing.message.*;
 import eu.emdc.streamthing.stats.Debug;
 
@@ -11,6 +7,7 @@ import peersim.cdsim.CDProtocol;
 import peersim.config.Configuration;
 import peersim.config.FastConfig;
 import peersim.core.CommonState;
+import peersim.core.IdleProtocol;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
@@ -29,6 +26,7 @@ public class StreamThing implements CDProtocol, EDProtocol {
 	private StreamManager m_streamManager;
 	private NodeWorld m_world;
 	private VideoCreator m_creator;
+	private MSPastryProtocol m_pastry;
 
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
@@ -116,12 +114,12 @@ public class StreamThing implements CDProtocol, EDProtocol {
 		Debug.info("Parsing msg: " + msg.toString());
 		switch (msg.GetEventType()) {
 		case JOIN:
-			// ask random node to join (should be closest node... right?)
-			Node dest = Network.get(CommonState.r.nextInt(Network.size()));
-			transport.send(src, dest, new Message(MessageType.JOIN, src), pid);
+			//System.out.println();
+			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
+			m_pastry.join();
 			break;
 		case LEAVE:
-			// notify my friends I'm leaving
+			;
 			break;
 		case PUBLISH:
 			// hash stream id

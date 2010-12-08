@@ -259,6 +259,7 @@ public class MSPastryProtocol implements Cloneable, EDProtocol {
 
         //leave a track of the transit of the message over this node
         m.nrHops++;
+        
         if(m.trackSize<m.tracks.length)
             m.trackSize++;
         m.tracks[m.trackSize-1]= this.nodeId;

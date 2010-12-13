@@ -71,14 +71,12 @@ public class Initialiser implements Control {
 					{
 						//Network.remove(i);
 						n.setFailState(Fallible.DEAD);
-						Debug.control("NetworkControl: Removing node "
-								+ i + " for streamId:" + event.GetNodeId());
+						//Debug.control("NetworkControl: Removing node " + i + " for streamId:" + event.GetNodeId());
 						break;
 					}
 				}
 				break;
 			default: /* all other events we can just go ahead and schedule */
-				System.out.println(StreamThing.GetNodeIdFromStreamId(event.GetNodeId()));
 				
 				EDSimulator.add(0, event, getNode(StreamThing.GetNodeIdFromStreamId(event.GetNodeId())), streamThingPid);
 				break; 

@@ -10,7 +10,7 @@ public class VideoMessage extends StreamMessage {
 	public Node dest;
 	
 	public VideoMessage(Node source) {
-		super(MessageType.VIDEO, source);
+		super(MessageType.VIDEO, 0);
 	}
 
 }

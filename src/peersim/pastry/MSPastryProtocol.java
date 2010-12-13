@@ -24,6 +24,7 @@ import peersim.transport.*;
 import java.util.Comparator;
 
 import eu.emdc.streamthing.StreamThing;
+import eu.emdc.streamthing.message.MessageType;
 import eu.emdc.streamthing.message.StreamMessage;
 
 //__________________________________________________________________________________________________
@@ -372,11 +373,16 @@ public class MSPastryProtocol implements Cloneable, EDProtocol {
             Node blah = nodeIdtoNode(this.nodeId);
             
             StreamThing s = (StreamThing) blah.getProtocol(Configuration.lookupPid(("streamthing")));
-            if (m.messageType == Message.MSG_LOOKUP) {
+            
+            if (s.m_myStreamNodeId != -1 && m.messageType == Message.MSG_LOOKUP) {
             		Message data = (Message) m.body;
             		if (data.body instanceof StreamMessage) {
-            			StreamMessage stream = (StreamMessage) data.body;
-            			System.out.println("monkey" + stream.streamId);
+            			StreamMessage streamMessage = (StreamMessage) data.body;
+            			if (streamMessage.type == MessageType.SUBSCRIBE && streamMessage.source != s.m_myStreamNodeId) {
+            				if (s.isSubscribingTo(streamMessage.streamId)) {
+            					System.out.println(CommonState.getIntTime() + " CARING: streamId "  + streamMessage.streamId + " source: " + streamMessage.source + " I am: " + s.m_myStreamNodeId);
+            				}
+            			}
             		} 
             }
             transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);
@@ -724,13 +730,13 @@ public class MSPastryProtocol implements Cloneable, EDProtocol {
      * debug only
      * @param o Object
      */
-    private static void e(Object o) { if (MSPastryCommonConfig.DEBUG) System.err.println(o);}
+    private static void e(Object o) { /* if (MSPastryCommonConfig.DEBUG) System.err.println(o) */;}
 
     /**
      * debug only
      * @param o Object
      */
-    private static void o(Object o) { if (MSPastryCommonConfig.DEBUG) System.out.println(o);}
+    private static void o(Object o) { /* if (MSPastryCommonConfig.DEBUG) System.out.println(o);*/}
 
     //______________________________________________________________________________________________
 } // End of class

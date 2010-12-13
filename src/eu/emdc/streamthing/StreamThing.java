@@ -1,7 +1,9 @@
 package eu.emdc.streamthing;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import eu.emdc.streamthing.message.*;
@@ -31,16 +33,19 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected StreamManager m_streamManager;
 	protected NodeWorld m_world;
 	protected MSPastryProtocol m_pastry;
-	public int m_streamId;
+	public int m_myStreamNodeId;
 	
 	static public Map< Integer, BigInteger> HashFunction = new HashMap<Integer, BigInteger>(); 
+	protected List<Integer> m_mySubscriptions = new ArrayList<Integer>();
+	protected Map<Integer, Integer> m_streamToPublisherStreamNodeId = new HashMap<Integer, Integer>();
+	protected List<Integer> m_StreamsISubscribeTo = new ArrayList<Integer>();
 	
 	static public long GetNodeIdFromStreamId (int streamId){
 		for (int i = 0; i < Network.size(); i++)
 		{
 			StreamThing s = (StreamThing) Network.get(i).getProtocol(Configuration.lookupPid("streamthing"));
 			
-			if (s.m_streamId == streamId)
+			if (s.m_myStreamNodeId == streamId)
 			{
 				return Network.get(i).getID();
 			}
@@ -49,11 +54,20 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		return -1;
 	}
 	
+	static public Node GetNodeFromNodeId(long nodeId) {
+		for (int i = 0; i < Network.size(); i++)
+		{
+			if (Network.get(i).getID() == nodeId)
+				return Network.get(i);
+		}
+		return null;
+	}
+	
 	static public int GetStreamIdFromNodeId(long nodeId) {
 		for (int i = 0; i < Network.size(); i++) {
 			if (Network.get(i).getID() == nodeId)	 {	
 				StreamThing s = (StreamThing) Network.get(i).getProtocol(Configuration.lookupPid("streamthing"));
-				return s.m_streamId;
+				return s.m_myStreamNodeId;
 			}
 		}
 		return -1;
@@ -110,7 +124,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				m_streamManager.transportVideoMessages(node, pid);
 			}
 			else if (event instanceof StreamMessage) {
-				//handleMessage(node, (StreamMessage) event, pid);
+				handleMessage(node, (StreamMessage) event, pid);
 				return;
 			}
 			else {
@@ -128,6 +142,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			s.m_world = new NodeWorld();
 			s.m_streamManager = null;
 			s.m_nodeConfig = new NodeConfig();
+			s.m_myStreamNodeId = -1;
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -136,12 +151,12 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	}
 
 	/* protocol methods */
-	private void handleMessage(BigInteger src, BigInteger dest, StreamMessage msg) {
+	private void handleMessage(Node src, StreamMessage msg, int pid) {
 		switch (msg.type) {
-		case PUBLISH:
-			
-			break;
-		default:
+		case SUBSCRIBE_ACK:
+			m_StreamsISubscribeTo.add(msg.streamId);
+			System.out.println(m_myStreamNodeId + " got a subscribe ack message from " + msg.source + " on stream id " + msg.streamId
+					+ " publisher is " + msg.publisher);
 			break;
 		}
 	}
@@ -156,7 +171,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				
 		switch (msg.GetEventType()) {
 		case JOIN:
-			m_streamId = msg.GetNodeId();
+			m_myStreamNodeId = msg.GetNodeId();
 			//System.out.println();
 			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
 			
@@ -169,6 +184,38 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					Message data = (Message)m.body;
 					if (data.body instanceof StreamMessage) {
 						StreamMessage innerMessage = (StreamMessage)data.body;
+						
+						switch (innerMessage.type) {
+						case PUBLISH: 
+							m_streamToPublisherStreamNodeId.put(innerMessage.streamId, innerMessage.source);
+							System.out.println(m_myStreamNodeId + " received a publish from " + innerMessage.source + " to stream " + innerMessage.streamId);
+							break;
+						case SUBSCRIBE:
+							if (m_streamToPublisherStreamNodeId.containsKey(innerMessage.streamId)) {
+								m_mySubscriptions.add(innerMessage.source);
+								
+								/* send acknowledge message outside pastry */
+								StreamMessage replyMessage = new StreamMessage(MessageType.SUBSCRIBE_ACK);
+								replyMessage.source = m_myStreamNodeId;
+								replyMessage.streamId = innerMessage.streamId;
+								replyMessage.publisher = m_streamToPublisherStreamNodeId.get(innerMessage.streamId);
+								
+								// peersim hack
+								int mypid = Configuration.lookupPid("streamthing");
+								Transport myTransport = (Transport) GetNodeFromNodeId(GetNodeIdFromStreamId(m_myStreamNodeId)).getProtocol(FastConfig
+										.getTransport(mypid));
+								
+								myTransport.send(GetNodeFromNodeId(GetNodeIdFromStreamId(m_myStreamNodeId)), 
+										GetNodeFromNodeId(GetNodeIdFromStreamId(innerMessage.source)), replyMessage, mypid);
+								//m_pastry.send(replyMessage.dest, replyMessage);
+								
+								System.out.println(m_myStreamNodeId + " received a subscribe from " + innerMessage.source + "to stream" + innerMessage.streamId);
+							} else {
+								System.out.println("severe error in input file");
+							}
+							break;
+						}
+						
 					//String d = (String) ((Message) data).body;
 						System.out.println("received message < " +
 							m.dest + " " + innerMessage.toString() +
@@ -185,9 +232,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			;
 			break;
 		case PUBLISH:
-			// hash stream id
-			// locate resp node
-			// send store ref to node
 			
 			if (m_streamManager == null) {
 				Float capacity = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
@@ -198,22 +242,34 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				Debug.info(src.getID() + " published a new stream");
 			}
 					
-			Message createMsg = new Message("Create Msg received");
+			/* message so that subscribers can find the stream in the network */
+			StreamMessage streamMessage = new StreamMessage(MessageType.PUBLISH);
+			streamMessage.streamId = msg.GetEventParams().get(0).intValue();
+			streamMessage.source = msg.GetNodeId();
+			
+			Message createMsg = new Message(streamMessage);
 			UniformRandomGenerator urg = new UniformRandomGenerator(
                     MSPastryCommonConfig.BITS, CommonState.r);
 			BigInteger temp = urg.generate();
+			createMsg.dest = temp; 
+			
 			HashFunction.put(msg.GetEventParams().get(0).intValue(), temp);
+			
 			System.out.println(temp);
+			
 			m_pastry.send(temp, createMsg);
 			
 			break;
 		case SUBSCRIBE:
+			
+			/* send subscription message */
 			StreamMessage sm = new StreamMessage(MessageType.SUBSCRIBE);
 			sm.streamId = msg.GetEventParams().get(0).intValue();
+			sm.source = msg.GetNodeId();
 			
 			Message subscribeMsg = new Message(sm);
-			
-			m_pastry.send(HashFunction.get(msg.GetEventParams().get(0).intValue()), subscribeMsg);
+			subscribeMsg.dest = HashFunction.get(msg.GetEventParams().get(0).intValue());
+			m_pastry.send(subscribeMsg.dest, subscribeMsg);
 
 			break;
 		case UNSUBSCRIBE:
@@ -232,5 +288,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 //			
 //			System.out.println(n.getID() + " " + s.m_streamId + " " + p.nodeId);
 //		}
+	}
+	
+	public boolean isSubscribingTo(int streamId) {
+		return m_StreamsISubscribeTo.contains(streamId);
 	}
 }

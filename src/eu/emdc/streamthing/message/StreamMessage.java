@@ -7,16 +7,17 @@ public class StreamMessage {
 	
 	public MessageType type;
 	public int id;
-	public Node source;
+	public int source;
 	public String description; 
 	public long sent;
 	public int streamId;
+	public long publisher;
 	
 	public StreamMessage(MessageType type) {
-		this(type, null);
+		this(type, 0);
 	}
 	
-	public StreamMessage(MessageType type, Node source) {
+	public StreamMessage(MessageType type, int source) {
 		this.type = type;
 		this.source = source;
 		this.sent = CommonState.getTime();
@@ -25,8 +26,8 @@ public class StreamMessage {
 	@Override
 	public String toString() {
 		String s = "[Message] " + type.toString();
-		if (source != null) 
-			s += " " + source.getID();
+		if (source != 0) 
+			s += " " + source;
 		
 		return s;
 	}

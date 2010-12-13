@@ -30,11 +30,13 @@ public class PacketLoss implements Transport {
 	
 	@Override
 	public long getLatency(Node src, Node dest) {
+		/*
 		DelayTuple dt = null;
 		if ((dt = m_nodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
 				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
 			return CommonState.r.nextLong() - (long)dt.GetMinDelay();
 		}
+		*/
 		return 0;
 	}
 

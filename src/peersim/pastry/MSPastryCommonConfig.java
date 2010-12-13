@@ -25,7 +25,7 @@ public class MSPastryCommonConfig {
 
   public static       int L      = 32;          /*  =BITS/B        default  32*/
 
-  public static final boolean DEBUG = true;
+  public static final boolean DEBUG = false;
 
   /**
    * short information about current mspastry configuration

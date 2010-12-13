@@ -45,6 +45,11 @@ public class NodeWorld {
 		tempvect.add(newNodeStreamId);
 		m_childrenMap.put (bucket, tempvect);
 		m_listOfBuckets.remove(0);
+		
+		for (int i = 0; i < MAX_CHILDREN; i++)
+		{
+			m_listOfBuckets.add (newNodeStreamId);
+		}
 	}
 	
 	public void RemoveNode (int nodeToBeRemovedStreamId)

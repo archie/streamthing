@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Map;
 
+import eu.emdc.streamthing.stats.VideoTransport.NodeData;
+
 import peersim.config.Configuration;
 import peersim.core.Control;
 import peersim.core.Network;
@@ -25,7 +27,7 @@ public class LogControl implements Control {
 	@Override
 	public boolean execute() {
 		writeTransportLogToFile(logfileName);
-		System.out.println("Network size: " + Network.size());
+		System.err.println("Network size: " + Network.size());
 		return true;
 	}
 	
@@ -38,7 +40,7 @@ public class LogControl implements Control {
 			Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry)it.next();
-				dataOutStream.print(pairs.getValue() + "\t" + pairs.getKey());
+				dataOutStream.print(((NodeData)pairs.getValue()).packets + "\t" + ((NodeData)pairs.getValue()).latency + "\t" + pairs.getKey());
 				dataOutStream.println();
 			}
 			

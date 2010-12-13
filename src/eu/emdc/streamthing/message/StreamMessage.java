@@ -1,5 +1,6 @@
 package eu.emdc.streamthing.message;
 
+import peersim.core.CommonState;
 import peersim.core.Node;
 
 public class StreamMessage {
@@ -8,6 +9,7 @@ public class StreamMessage {
 	public int id;
 	public Node source;
 	public String description; 
+	public long sent;
 	
 	public StreamMessage(MessageType type) {
 		this(type, null);
@@ -16,6 +18,7 @@ public class StreamMessage {
 	public StreamMessage(MessageType type, Node source) {
 		this.type = type;
 		this.source = source;
+		this.sent = CommonState.getTime();
 	}
 	
 	@Override

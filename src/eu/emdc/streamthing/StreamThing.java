@@ -36,58 +36,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
 	
-	static public Map< Integer, BigInteger> HashFunction = new HashMap<Integer, BigInteger>(); 
-	
-	protected List<Integer> m_mySubscriptions = new ArrayList<Integer>();
-	protected Map<Integer, Integer> m_streamToPublisherStreamNodeId = new HashMap<Integer, Integer>();
-	protected List<Integer> m_StreamsISubscribeTo = new ArrayList<Integer>();
-	
-	static public long GetNodeIdFromStreamId (int streamId){
-		for (int i = 0; i < Network.size(); i++)
-		{
-			StreamThing s = (StreamThing) Network.get(i).getProtocol(Configuration.lookupPid("streamthing"));
-			
-			if (s.m_myStreamNodeId == streamId)
-			{
-				return Network.get(i).getID();
-			}
-		}
-		
-		return -1;
-	}
-	
-	static public Node GetNodeFromNodeId(long nodeId) {
-		for (int i = 0; i < Network.size(); i++)
-		{
-			if (Network.get(i).getID() == nodeId)
-				return Network.get(i);
-		}
-		return null;
-	}
-	
-	static public int GetStreamIdFromNodeId(long nodeId) {
-		for (int i = 0; i < Network.size(); i++) {
-			if (Network.get(i).getID() == nodeId)	 {	
-				StreamThing s = (StreamThing) Network.get(i).getProtocol(Configuration.lookupPid("streamthing"));
-				return s.m_myStreamNodeId;
-			}
-		}
-		return -1;
-	}
-	
-	static public BigInteger GetPastryIdFromNodeId (long nodeid){
-		for (int i = 0; i < Network.size(); i++)
-		{
-			if (Network.get(i).getID() == nodeid)
-			{
-				MSPastryProtocol p = (MSPastryProtocol) Network.get(i).getProtocol(Configuration.lookupPid("3mspastry"));
-			
-				return p.nodeId;
-			}
-		}
-		
-		return null;
-	}
+	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
+	static public Map<Integer, Integer> m_videoStreamToStreamNodeId = new HashMap<Integer, Long>();
 	
 	
 	public StreamThing(String prefix) {
@@ -159,16 +109,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	private void handleMessage(Node src, StreamMessage msg, int pid) {
 		switch (msg.type) {
 		case SUBSCRIBE_ACK:
-			m_StreamsISubscribeTo.add(msg.streamId);
-			if (msg.publisher != msg.relayer) {
-				System.out.println(m_myStreamNodeId + " got a subscribe ack from relayer " + msg.source + " on stream id " + msg.streamId
-						+ " publisher is " + msg.publisher);
-			} else {
-				System.out.println(m_myStreamNodeId + " got a subscribe ack message from publish holder " + msg.source + " stream: " + msg.streamId);
-			}
-			
-			break;
-			
+		
 		}
 	}
 
@@ -182,101 +123,27 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				
 		switch (msg.GetEventType()) {
 		case JOIN:
+			// update stream ID
+			// update global map of stream node id to node id
 			m_myStreamNodeId = msg.GetNodeId();
-			//System.out.println();
-			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
-			
-			m_pastry.setListener(new MSPastryProtocol .Listener() {
-				
-				@Override
-				public void receive(Message m) {
-					
-					// TODO Auto-generated method stub
-					Message data = (Message)m.body;
-					if (data.body instanceof StreamMessage) {
-						StreamMessage innerMessage = (StreamMessage)data.body;
-						
-						switch (innerMessage.type) {
-						case PUBLISH: 
-							m_streamToPublisherStreamNodeId.put(innerMessage.streamId, innerMessage.source);
-							System.out.println(m_myStreamNodeId + " received a publish from " + innerMessage.source + " to stream " + innerMessage.streamId);
-							break;
-						case SUBSCRIBE:
-							if (m_streamToPublisherStreamNodeId.containsKey(innerMessage.streamId)) {
-								m_mySubscriptions.add(innerMessage.source);
-								
-								/* send acknowledge message outside pastry */
-								StreamMessage replyMessage = new StreamMessage(MessageType.SUBSCRIBE_ACK);
-								replyMessage.source = m_myStreamNodeId;
-								replyMessage.streamId = innerMessage.streamId;
-								replyMessage.publisher = m_streamToPublisherStreamNodeId.get(innerMessage.streamId);
-								replyMessage.relayer = replyMessage.publisher;
-								
-								// peersim hack
-								int mypid = Configuration.lookupPid("streamthing");
-								Transport myTransport = (Transport) GetNodeFromNodeId(GetNodeIdFromStreamId(m_myStreamNodeId)).getProtocol(FastConfig
-										.getTransport(mypid));
-								
-								myTransport.send(GetNodeFromNodeId(GetNodeIdFromStreamId(m_myStreamNodeId)), 
-										GetNodeFromNodeId(GetNodeIdFromStreamId(innerMessage.source)), replyMessage, mypid);
-								//m_pastry.send(replyMessage.dest, replyMessage);
-								
-								System.out.println(m_myStreamNodeId + " received a subscribe from " + innerMessage.source + "to stream" + innerMessage.streamId);
-							} else {
-								System.out.println("ERR: subscribe msg from " + innerMessage.source + " for stream " + innerMessage.streamId + " to " + m_myStreamNodeId);
-							}
-							break;
-						}
-						
-					}
-				}
-			});
-			hasJoined = true;
-			m_pastry.join();
+			m_streamIdToNodeId.put (m_myStreamNodeId,  src.getID());
 			
 			break;
 		case LEAVE:
+			// inform children/parent
+			// (remove from required trees)
+			//
+			
 			//System.out.println("I actually enter this place");
-			;
+			m_streamIdToNodeId.remove(m_myStreamNodeId);
 			break;
 		case PUBLISH:
-			
-			if (m_streamManager == null) {
-				Float capacity = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
-				if (capacity == null) 
-					capacity = new Float(0);
-				m_streamManager = new StreamManager(m_world, transport, msg, capacity.intValue());
-				/*m_streamManager.scheduleStream(src, pid);*/
-				Debug.info(msg.GetNodeId() + " published a new stream");
-			}
-					
-			/* message so that subscribers can find the stream in the network */
-			StreamMessage streamMessage = new StreamMessage(MessageType.PUBLISH);
-			streamMessage.streamId = msg.GetEventParams().get(0).intValue();
-			streamMessage.source = m_myStreamNodeId;
-			
-			Message createMsg = new Message(streamMessage);
-			BigInteger temp = awesomeSelectionFunction(); // aka peersim pastry hack
-			createMsg.dest = temp; 
-			HashFunction.put(msg.GetEventParams().get(0).intValue(), temp);
-			
-			System.out.println(temp);
-			
-			m_pastry.send(temp, createMsg);
-			
+			m_videoStreamToStreamNodeId.put (msg.GetEventParams().get(0), m_myStreamNodeId);		
 			break;
 		case SUBSCRIBE:
 			
 			/* send subscription message */
-			StreamMessage sm = new StreamMessage(MessageType.SUBSCRIBE);
-			sm.streamId = msg.GetEventParams().get(0).intValue();
-			sm.source = msg.GetNodeId();
 			
-			Message subscribeMsg = new Message(sm);
-			subscribeMsg.dest = HashFunction.get(msg.GetEventParams().get(0).intValue());
-			
-			m_pastry.send(subscribeMsg.dest, subscribeMsg);
-
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe

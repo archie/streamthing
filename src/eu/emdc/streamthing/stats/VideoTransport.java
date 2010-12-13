@@ -1,16 +1,10 @@
 package eu.emdc.streamthing.stats;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
 
-import eu.emdc.streamthing.message.StreamMessage;
-
 import peersim.config.Configuration;
-import peersim.core.CommonState;
 import peersim.core.Node;
 import peersim.transport.Transport;
 
@@ -44,25 +38,16 @@ public class VideoTransport implements Transport {
 		if (nodeData.containsKey(src.getID())) {
 			NodeData data = nodeData.get(src.getID());
 			data.packets++;
-			data.latency += latency(msg);
 			nodeData.put(src.getID(), data);
 		} else {
 			NodeData data = new NodeData();
 			data.packets = 1l;
-			data.latency = latency(msg);
+			data.latency = 0;
 			nodeData.put(src.getID(), data);
 		}
 			
 		Transport t = (Transport) src.getProtocol(transport);
 		t.send(src, dest, msg, pid);
-	}
-	
-	private long latency(Object msg) {
-		if (msg instanceof StreamMessage) {
-			System.out.println("latency: " + (CommonState.getTime() - ((StreamMessage)msg).sent));
-			return CommonState.getTime() - ((StreamMessage)msg).sent;
-		}
-		return 0;
 	}
 
 	

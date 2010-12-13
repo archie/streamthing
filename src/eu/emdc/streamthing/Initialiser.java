@@ -11,6 +11,7 @@ import peersim.core.Control;
 import peersim.core.Fallible;
 import peersim.core.Network;
 import peersim.core.Node;
+import peersim.dynamics.NodeInitializer;
 import peersim.edsim.EDSimulator;
 
 public class Initialiser implements Control {
@@ -18,14 +19,25 @@ public class Initialiser implements Control {
 	/** The protocol identifier of the StreamThing protocol */
 
 	private static final String EVENTS = ".eventsfile";
+	private static final String PAR_INIT = "init";
+	
 	private int streamThingPid;
 	private boolean firstNode = true;
 	private Queue<StreamEvent> events;
 	private int initNodeCount = 0;
+	
+	protected final NodeInitializer[] inits;
 
 	public Initialiser(String prefix) {
 		this.streamThingPid = Configuration.getPid(prefix + ".protocol");
 
+		Object[] tmp = Configuration.getInstanceArray(prefix + "." + PAR_INIT);
+		inits = new NodeInitializer[tmp.length];
+		for (int i = 0; i < tmp.length; ++i) {
+			//System.out.println("Inits " + tmp[i]);
+			inits[i] = (NodeInitializer) tmp[i];
+		}
+		
 		EventHelper eventHelper = new EventHelper();
 		eventHelper.InitialiseEvents(Configuration.getString(prefix + EVENTS));
 
@@ -41,17 +53,12 @@ public class Initialiser implements Control {
 
 			switch (event.GetEventType()) {
 			case JOIN:
-				Node node;
-//				if (!firstNode) {
-//					node = (Node) Network.prototype.clone();
-//					Network.add(node);
-//				} else {
-//					node = Network.get(0);
-//					firstNode = false;
-//				}
-
-				node = Network.get(initNodeCount);
-				initNodeCount++;
+				Node node = (Node) Network.prototype.clone();
+				for (int j = 0; j < inits.length; ++j) {
+					inits[j].initialize(node);
+				}
+				Network.add(node);
+				
 				EDSimulator.add(0, event, node, streamThingPid);
 
 				break;

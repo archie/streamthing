@@ -23,13 +23,13 @@ import peersim.transport.Transport;
 
 public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
-	
+	private static final String PAR_CAPACITY = "capacityfile";
+	public NodeConfig m_nodeConfig = new NodeConfig();
 	
 	/* implementation */
 	protected String prefix;
 	protected StreamManager m_streamManager;
 	protected NodeWorld m_world;
-	protected VideoCreator m_creator;
 	protected MSPastryProtocol m_pastry;
 	public int m_streamId;
 	
@@ -46,6 +46,16 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			}
 		}
 		
+		return -1;
+	}
+	
+	static public int GetStreamIdFromNodeId(long nodeId) {
+		for (int i = 0; i < Network.size(); i++) {
+			if (Network.get(i).getID() == nodeId)	 {	
+				StreamThing s = (StreamThing) Network.get(i).getProtocol(Configuration.lookupPid("streamthing"));
+				return s.m_streamId;
+			}
+		}
 		return -1;
 	}
 	
@@ -66,12 +76,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
-		
-		
+		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
 		// StreamThing helpers
 		m_world = new NodeWorld();
-		m_streamManager = new StreamManager(m_world);
-		
 		
 	}
 
@@ -97,7 +104,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				m_streamManager.processVideoMessage(node, (VideoMessage) event);
 			}
 			else if (event instanceof PublishVideoEvent) {
-				m_creator.streamVideo(node, pid);
+				m_streamManager.streamVideo(node, pid);
+			}
+			else if (event instanceof VideoTransportEvent) {
+				m_streamManager.transportVideoMessages(node, pid);
 			}
 			else if (event instanceof StreamMessage) {
 				//handleMessage(node, (StreamMessage) event, pid);
@@ -115,9 +125,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		try {
 			s = (StreamThing) super.clone();
 			s.m_pastry = null;
-			s.m_creator = null;
 			s.m_world = new NodeWorld();
-			s.m_streamManager = new StreamManager(s.m_world);
+			s.m_streamManager = null;
+			s.m_nodeConfig = new NodeConfig();
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -142,13 +152,14 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	private void handleTrigger(Node src, StreamEvent msg, int pid) {
 		Transport transport = (Transport) src.getProtocol(FastConfig
 				.getTransport(pid));
-		Debug.info(src.getID() + "Parsing msg: " + msg.toString());
+		//Debug.info(src.getID() + "Parsing msg: " + msg.toString());
 				
 		switch (msg.GetEventType()) {
 		case JOIN:
 			m_streamId = msg.GetNodeId();
 			//System.out.println();
 			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
+			/*
 			m_pastry.setListener(new MSPastryProtocol .Listener() {
 				
 				@Override
@@ -162,6 +173,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 //					
 				}
 			});
+			*/
 			m_pastry.join();
 			
 			break;
@@ -174,11 +186,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// locate resp node
 			// send store ref to node
 			
-//			if (m_creator == null) {
-//				m_creator = new VideoCreator(m_world, transport, msg);
-//				m_creator.scheduleStream(src, pid);
-//				Debug.info(src.getID() + " published a new stream");
-//			}
+			if (m_streamManager == null) {
+				m_streamManager = new StreamManager(m_world, transport, msg, m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId()).intValue());
+				/*m_streamManager.scheduleStream(src, pid);*/
+				Debug.info(src.getID() + " published a new stream");
+			}
 					
 			Message createMsg = new Message("Create Msg received");
 			UniformRandomGenerator urg = new UniformRandomGenerator(

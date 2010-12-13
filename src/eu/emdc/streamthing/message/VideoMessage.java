@@ -7,6 +7,7 @@ public class VideoMessage extends StreamMessage {
 	// video specifics here
 	public int stream_id;
 	public int group_id;
+	public Node dest;
 	
 	public VideoMessage(Node source) {
 		super(MessageType.VIDEO, source);

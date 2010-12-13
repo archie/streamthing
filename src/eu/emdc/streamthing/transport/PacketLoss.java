@@ -1,5 +1,8 @@
 package eu.emdc.streamthing.transport;
 
+import java.util.Map;
+import java.util.Queue;
+
 import eu.emdc.streamthing.DelayTuple;
 import eu.emdc.streamthing.NodeConfig;
 import eu.emdc.streamthing.StreamThing;
@@ -13,7 +16,6 @@ public class PacketLoss implements Transport {
 	/* configuration keywords */
 	private static final String PAR_TRANSPORT = "transport";
 	private static final String NODE_LATENCY = ".latencyfile";
-	private static final String NODE_CAPACITY = ".capacityfile";
 	
 	private final int transport;
 	private NodeConfig m_nodeConfig; 
@@ -23,7 +25,6 @@ public class PacketLoss implements Transport {
 		// Read node config
 		m_nodeConfig = new NodeConfig();
 		m_nodeConfig.InitialiseLatencyMap(Configuration.getString(prefix + NODE_LATENCY));
-		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + NODE_CAPACITY));
 		
 	}
 	

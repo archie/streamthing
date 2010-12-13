@@ -159,7 +159,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_streamId = msg.GetNodeId();
 			//System.out.println();
 			m_pastry = (MSPastryProtocol) src.getProtocol(Configuration.lookupPid("3mspastry"));
-			/*
+			
 			m_pastry.setListener(new MSPastryProtocol .Listener() {
 				
 				@Override
@@ -173,7 +173,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 //					
 				}
 			});
-			*/
+			
 			m_pastry.join();
 			
 			break;
@@ -187,7 +187,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// send store ref to node
 			
 			if (m_streamManager == null) {
-				m_streamManager = new StreamManager(m_world, transport, msg, m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId()).intValue());
+				Float capacity = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
+				if (capacity == null) 
+					capacity = new Float(0);
+				m_streamManager = new StreamManager(m_world, transport, msg, capacity.intValue());
 				/*m_streamManager.scheduleStream(src, pid);*/
 				Debug.info(src.getID() + " published a new stream");
 			}

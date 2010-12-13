@@ -10,6 +10,7 @@ public class StreamMessage {
 	public Node source;
 	public String description; 
 	public long sent;
+	public int streamId;
 	
 	public StreamMessage(MessageType type) {
 		this(type, null);

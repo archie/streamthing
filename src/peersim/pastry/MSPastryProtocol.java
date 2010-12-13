@@ -23,6 +23,9 @@ import peersim.edsim.*;
 import peersim.transport.*;
 import java.util.Comparator;
 
+import eu.emdc.streamthing.StreamThing;
+import eu.emdc.streamthing.message.StreamMessage;
+
 //__________________________________________________________________________________________________
 public class MSPastryProtocol implements Cloneable, EDProtocol {
     //______________________________________________________________________________________________
@@ -365,6 +368,17 @@ public class MSPastryProtocol implements Cloneable, EDProtocol {
 
         if (  (!this.nodeId.equals(nexthop)) && (nexthop != null)) {    //send m to nexthop
             transport = (UnreliableTransport) (Network.prototype).getProtocol(tid);
+            // patch
+            Node blah = nodeIdtoNode(this.nodeId);
+            
+            StreamThing s = (StreamThing) blah.getProtocol(Configuration.lookupPid(("streamthing")));
+            if (m.messageType == Message.MSG_LOOKUP) {
+            		Message data = (Message) m.body;
+            		if (data.body instanceof StreamMessage) {
+            			StreamMessage stream = (StreamMessage) data.body;
+            			System.out.println("monkey" + stream.streamId);
+            		} 
+            }
             transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);
         }
         else receiveRoute(m);

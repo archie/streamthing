@@ -166,11 +166,14 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				public void receive(Message m) {
 					//handleMessage(m.src, m.dest, (StreamMessage)m.body);
 					// TODO Auto-generated method stub
-					Object data = m.body;
-//					System.out.println("received message < " +
-//							m.dest + " " + data.toString() +
-//							" > from address: "+ m.src);
-//					
+					Message data = (Message)m.body;
+					if (data.body instanceof StreamMessage) {
+						StreamMessage innerMessage = (StreamMessage)data.body;
+					//String d = (String) ((Message) data).body;
+						System.out.println("received message < " +
+							m.dest + " " + innerMessage.toString() +
+							" > from address: "+ m.src);
+					}
 				}
 			});
 			
@@ -178,7 +181,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			
 			break;
 		case LEAVE:
-			System.out.println("I actually enter this place");
+			//System.out.println("I actually enter this place");
 			;
 			break;
 		case PUBLISH:
@@ -202,10 +205,13 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			HashFunction.put(msg.GetEventParams().get(0).intValue(), temp);
 			System.out.println(temp);
 			m_pastry.send(temp, createMsg);
+			
 			break;
 		case SUBSCRIBE:
+			StreamMessage sm = new StreamMessage(MessageType.SUBSCRIBE);
+			sm.streamId = msg.GetEventParams().get(0).intValue();
 			
-			Message subscribeMsg = new Message("SUBSCRIBE ME LOLZ");
+			Message subscribeMsg = new Message(sm);
 			
 			m_pastry.send(HashFunction.get(msg.GetEventParams().get(0).intValue()), subscribeMsg);
 

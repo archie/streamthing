@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<project name="streamthing" default="build" basedir=".">
+  <property name="classes.dir" value="build/classes" />
+  <property name="lib.dir" value="../p2p/" />
+  <property name="main-class" value="peersim.Simulator" />
+  
+  <path id="classpath">
+    <fileset dir="${lib.dir}" includes="**/*.jar" />
+  </path>
+
+  <target name="build">
+    <mkdir dir="${classes.dir}" />
+    <javac srcdir="src" destdir="${classes.dir}" debug="true"
+           includes="**/*.java" classpathref="classpath" />
+  </target>
+
+  <target name="jar" depends="build">
+    <jar destfile="${ant.project.name}.jar" basedir="${classes.dir}">
+      <manifest>
+        <attribute name="Main-Class" value="${main-class}" />
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="run" depends="jar">
+    <java fork="true" classname="${main-class}">
+      <classpath>
+        <path refid="classpath" />
+        <path location="${ant.project.name}.jar" />
+      </classpath>
+      <arg line="pastry.config" />
+    </java>
+  </target>
+
+  <target name="clean">
+    <delete dir="build" />
+  </target>
+
+</project>

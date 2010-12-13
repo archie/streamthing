@@ -30,6 +30,13 @@
       </classpath>
       <arg line="pastry.config" />
     </java>
+    <mkdir dir="graphs" />
+    <exec executable="/bin/sh">
+      <arg line='-c "sort -r logfile.data &gt; packets.data"' />
+    </exec>
+<!--    <exec executable="/bin/sh">
+      <arg line='-c "gnuplot graphs.plot"' />
+    </exec>-->
   </target>
 
   <target name="clean">

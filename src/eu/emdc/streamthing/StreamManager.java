@@ -1,6 +1,8 @@
 package eu.emdc.streamthing;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
 import peersim.core.Node;
@@ -15,35 +17,45 @@ public class StreamManager {
 	private StreamState m_currentState = StreamState.IDLE;
 	private Queue<VideoMessage> m_buffer; // needs to be made global
 	
-	private int m_streamID;
-	private int m_streamDuration; /* timeunits */
-	private int m_streamRate; /* packets / thousand_timeunits */
+	private Map<Integer, StreamData> m_streams = new HashMap<Integer, StreamData>();
 	private NodeWorld m_world;
 	private Transport m_transport;
 	private Queue<VideoMessage> m_output;
 	private int m_uploadCapacity;
 	private int m_queuesize;
 	
-	public StreamManager(NodeWorld world, Transport transport,
-			StreamEvent pubEvent, int uploadCapacity) {
+	class StreamData {
+		public int duration;
+		public int rate;
+		public StreamData(int duration, int rate) {
+			this.duration = duration;
+			this.rate = rate;
+		}
+	}
+	
+	public StreamManager(NodeWorld world, Transport transport, int uploadCapacity) {
 		m_world = world;
 		m_transport = transport;
 		m_output = new LinkedList<VideoMessage>();
 		m_uploadCapacity = uploadCapacity;
 
-		// parse pubEvent
-		m_streamID = pubEvent.GetEventParams().get(0).intValue();
-		m_streamDuration = pubEvent.GetEventParams().get(1).intValue();
-		m_streamRate = pubEvent.GetEventParams().get(2).intValue();
-
-		m_queuesize = m_uploadCapacity / m_streamRate;
+		m_queuesize = 5000;
 		m_buffer = new LinkedList<VideoMessage>(); // FIFO
 	}
 	
+	public void publishNewStream(StreamEvent pubEvent) {
+		// parse pubEvent
+		m_streams.put(pubEvent.GetEventParams().get(0).intValue(),
+				new StreamData(pubEvent.GetEventParams().get(1).intValue(), 
+						pubEvent.GetEventParams().get(2).intValue()));
+		
+	}
+	
 	public void scheduleStream(Node src, int pid, int streamId) {
+		int streamDuration = m_streams.get(streamId).duration;
 		VideoPublishEvent pve = new VideoPublishEvent();
 		pve.streamId = streamId;
-		for (int i = 0; i < m_streamDuration; i++) {
+		for (int i = 0; i < streamDuration; i++) {
 			EDSimulator.add(i, pve, src, pid);
 		}
 	}
@@ -51,8 +63,8 @@ public class StreamManager {
 	public void streamVideo(Node src, VideoPublishEvent event, int pid) {
 		int bandwidth = 0; // calculate how?
 		VideoMessage streamMsg;
-
-		for (int i = 0; i < m_streamRate; i++) {
+		int streamRate = m_streams.get(event.streamId).rate;
+		for (int i = 0; i < streamRate; i++) {
 			streamMsg = new VideoMessage(src);
 			streamMsg.streamId = event.streamId;
 			for (int dest : m_world.GetChildren(StreamThing.GetStreamIdFromNodeId(src.getID()))) {
@@ -96,8 +108,8 @@ public class StreamManager {
 			break;
 		case VIEWnFORWARD:
 			// measure something? and send stuff!
-			consumeVideo(node, msg.streamId);
 			forwardData(node);
+			consumeVideo(node, msg.streamId);
 			break;
 		default:
 			// naaeh	
@@ -106,7 +118,7 @@ public class StreamManager {
 	
 	private void forwardData(Node node) {
 		VideoMessage msg = null; // TODO: something similar to that above
-		
+		System.out.println("I get to forward stuffs!");
 	}
 	
 	private void consumeVideo(Node node, int streamId) {

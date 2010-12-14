@@ -144,13 +144,27 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			break;
 		case PUBLISH:
 			// Add to video stream to streamNodeId map
-			// Add to multicast tree
 			m_videoStreamToStreamNodeId.put (msg.GetEventParams().get(0).intValue(), m_myStreamNodeId);	
 			
+			// Add to multicast tree
+			
 			// I am now the root of a multicast tree;
+			
+			// start streaming
+			if (m_streamManager == null) {
+				m_streamManager = new StreamManager(m_world, transport,
+						m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId()).intValue());
+			}
+			m_streamManager.publishNewStream(msg);
+			
 			break;
 		case SUBSCRIBE:
 			
+			// in case I'm not a publisher (most likely), I need a stream manager to be able to forward data
+			if (m_streamManager == null) {
+				m_streamManager = new StreamManager(m_world, transport,
+						m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId()).intValue());
+			}
 			/* send subscription message */
 			
 			break;

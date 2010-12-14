@@ -93,12 +93,9 @@ public class StreamManager {
 			// expect incoming msgs - no need to process, perhaps measure something? 
 			consumeVideo(node);
 			break;
-		case FORWARD:
-			// send stuff to this node's children
-			forwardData(node);
-			break;
 		case VIEWnFORWARD:
 			// measure something? and send stuff!
+			consumeVideo(node);
 			forwardData(node);
 			break;
 		default:

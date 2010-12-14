@@ -65,12 +65,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	@Override
 	public void processEvent(Node node, int pid, Object event) {
 		
-		if (event instanceof peersim.pastry.Message)
-		{
-			// lolz
-		}
-		else 
-		{
 			if (event instanceof StreamEvent) {
 				handleTrigger(node, (StreamEvent) event, pid);
 				return;
@@ -91,7 +85,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			else {
 				System.err.println("Unknown message!");
 			}
-		}
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package eu.emdc.streamthing;
 
-import java.util.LinkedList;
 import java.util.Queue;
 
 import eu.emdc.streamthing.stats.Debug;
@@ -8,7 +7,6 @@ import eu.emdc.streamthing.stats.Debug;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
-import peersim.core.Fallible;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.dynamics.NodeInitializer;
@@ -20,10 +18,10 @@ public class Initialiser implements Control {
 
 	private static final String EVENTS = ".eventsfile";
 	private static final String PAR_INIT = "init";
-	
+
 	private int streamThingPid;
 	private Queue<StreamEvent> events;
-	
+
 	protected final NodeInitializer[] inits;
 
 	public Initialiser(String prefix) {
@@ -32,10 +30,10 @@ public class Initialiser implements Control {
 		Object[] tmp = Configuration.getInstanceArray(prefix + "." + PAR_INIT);
 		inits = new NodeInitializer[tmp.length];
 		for (int i = 0; i < tmp.length; ++i) {
-			//System.out.println("Inits " + tmp[i]);
+			// System.out.println("Inits " + tmp[i]);
 			inits[i] = (NodeInitializer) tmp[i];
 		}
-		
+
 		EventHelper eventHelper = new EventHelper();
 		eventHelper.InitialiseEvents(Configuration.getString(prefix + EVENTS));
 
@@ -52,25 +50,28 @@ public class Initialiser implements Control {
 			switch (event.GetEventType()) {
 			case JOIN:
 				Node node = (Node) Network.prototype.clone();
+				
 				for (int j = 0; j < inits.length; ++j) {
 					inits[j].initialize(node);
 				}
-				Network.add(node);
 				
+				Network.add(node);
+
 				EDSimulator.add(0, event, node, streamThingPid);
 				break;
 			case FAIL:
-				// TODO: brutally remove or mark as dead... not sure... if mark as dead
-				
+				// TODO: brutally remove or mark as dead... not sure... if mark
+				// as dead
+
 				break;
 			default: /* all other events we can just go ahead and schedule */
 				Node toNode = getNodeFromStreamNodeId(event.GetNodeId());
 				if (toNode == null) {
-					Debug.control("No such node in network.");
+					// Debug.control("No such node in network.");
 				} else {
 					EDSimulator.add(0, event, toNode, streamThingPid);
 				}
-				break; 
+				break;
 			}
 		}
 
@@ -78,12 +79,13 @@ public class Initialiser implements Control {
 	}
 
 	private Node getNodeFromStreamNodeId(long streamNodeID) {
-		long nodeId = StreamThing.m_streamIdToNodeId.get(streamNodeID);
-		for (int i = 0; i < Network.size(); i++) {
-			if (Network.get(i).getID() == nodeId)
-				return Network.get(i);
+		if (StreamThing.m_streamIdToNodeId.containsKey(streamNodeID)) {
+			long nodeId = StreamThing.m_streamIdToNodeId.get(streamNodeID);
+			for (int i = 0; i < Network.size(); i++) {
+				if (Network.get(i).getID() == nodeId)
+					return Network.get(i);
+			}
 		}
-
 		return null;
 	}
 }

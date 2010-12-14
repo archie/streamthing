@@ -2,6 +2,7 @@ package eu.emdc.streamthing;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -17,10 +18,8 @@ public class StreamManager {
 	private Queue<VideoMessage> m_buffer; // needs to be made global
 	
 	private Map<Integer, StreamData> m_streams = new HashMap<Integer, StreamData>();
-	private NodeWorld m_world;
 	private Transport m_transport;
 	private Queue<VideoMessage> m_output;
-	private int m_uploadCapacity;
 	private int m_queuesize;
 	
 	class StreamData {
@@ -32,11 +31,9 @@ public class StreamManager {
 		}
 	}
 	
-	public StreamManager(NodeWorld world, Transport transport, int uploadCapacity) {
-		m_world = world;
+	public StreamManager(Transport transport, int uploadCapacity) {
 		m_transport = transport;
 		m_output = new LinkedList<VideoMessage>();
-		m_uploadCapacity = uploadCapacity;
 
 		m_queuesize = 5000;
 		m_buffer = new LinkedList<VideoMessage>(); // FIFO
@@ -69,28 +66,32 @@ public class StreamManager {
 		 *   and your upload capacity is 1000
 		 *   
 		 *   How to divide the up capacity equal?
-		 *    - round robin?
-		 *    - all to one, push subscribing down? 
+		 *    - round robin? (equal drop for all nodes)
+		 *    - all to one, push subscribing node (causing overload) down? 
+		 *   
 		 */
-		
+		int streamNodeId = StreamThing.GetStreamIdFromNodeId(src.getID());
+		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(event.streamId).GetChildren(streamNodeId);
 		
 		// in this implementation using the example above, the second node will not get any packets.
 		VideoMessage streamMsg;
 		
-		int streamRate = m_streams.get(event.streamId).rate;
+		int outRate = 5;
 		
-		for (int i = 0; i < streamRate; i++) {
+		for (int i = 0; i < outRate; i++) {
 			streamMsg = new VideoMessage(src);
 			streamMsg.streamId = event.streamId;
-			for (int dest : m_world.GetChildren(StreamThing.GetStreamIdFromNodeId(src.getID()))) {
+			
+			for (int dest : children) {
 				streamMsg.destStreamNodeId= dest;
-				if (m_output.size() <= m_queuesize) {
+				
+				//if (m_output.size() <= m_queuesize) {
 					m_output.add(streamMsg);
-				} else {
-					System.out.println("dropped a packet");
-				}
+				//} else {
+				//	System.out.println("dropped a packet");
+				//}
 			}
-			EDSimulator.add(streamRate/1000, new VideoTransportEvent(), src, pid);
+			EDSimulator.add(outRate+i, new VideoTransportEvent(), src, pid);
 		}
 		
 		
@@ -103,33 +104,18 @@ public class StreamManager {
 		}
 	}
 	
-	public StreamState setState(StreamState newstate) {
-		StreamState oldState = m_currentState;
-		m_currentState = newstate;
-		return oldState;
-	}
-	
 	public void processVideoMessage(Node node, VideoMessage msg) {
-		// TODO: check if msg is intended for me
-		m_buffer.add(msg);
+		// should I forward?
 		
-		switch (m_currentState) {
-		case IDLE: 
-			// queue should be empty - nothing to do
-			m_buffer.clear();
-			break;
-		case VIEW:
-			// expect incoming msgs - no need to process, perhaps measure something? 
+		m_buffer.add(msg);
+	
+		if (true) { // only consume
 			consumeVideo(node, msg.streamId);
-			break;
-		case VIEWnFORWARD:
-			// measure something? and send stuff!
+		} else {
 			forwardData(node);
 			consumeVideo(node, msg.streamId);
-			break;
-		default:
-			// naaeh	
 		}
+		
 	}
 	
 	private void forwardData(Node node) {
@@ -141,5 +127,6 @@ public class StreamManager {
 		for (VideoMessage msg : m_buffer) {
 			System.out.println(node.getID() + " consuming video msg: " + msg.id);
 		}
+		m_buffer.clear();
 	}
 }

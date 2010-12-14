@@ -29,9 +29,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	/* implementation */
 	protected String prefix;
 	protected StreamManager m_streamManager;
-	protected NodeWorld m_world;
 	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
+	protected List<Integer> m_streamsISubscribeTo; 
 	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
 
@@ -62,6 +62,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
+		m_streamsISubscribeTo = new ArrayList<Integer>();
 		// StreamThing helpers
 		
 	}
@@ -79,9 +80,12 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				return;
 			}
 			else if (event instanceof VideoMessage) {
-				m_streamManager.processVideoMessage(node, (VideoMessage) event);
+				VideoMessage eventMsg = (VideoMessage) event;
+				if (m_streamsISubscribeTo.contains(eventMsg.streamId))
+					m_streamManager.processVideoMessage(node, eventMsg);
 			}
 			else if (event instanceof VideoPublishEvent) {
+				System.out.println("publish event");
 				m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
 			}
 			else if (event instanceof VideoTransportEvent) {
@@ -101,10 +105,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		StreamThing s = null;
 		try {
 			s = (StreamThing) super.clone();
-			s.m_world = null;
 			s.m_streamManager = null;
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
+			s.m_streamsISubscribeTo = new ArrayList<Integer>();
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -150,22 +154,22 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_videoStreamToStreamNodeId.put (msg.GetEventParams().get(0).intValue(), m_myStreamNodeId);	
 			
 			// Create new multicast tree
-
 			System.out.println(m_myStreamNodeId + " is going to publish ");
-			NodeWorld nw = new NodeWorld (msg.GetEventParams().get (0).intValue(), m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
+			Float f = m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
+			if (f == null) {
+				f = new Float(5000);
+			}
+			NodeWorld nw = new NodeWorld (msg.GetEventParams().get (0).intValue(), m_myStreamNodeId, f.intValue());
 			m_videoStreamIdToMulticastTreeMap.put (msg.GetEventParams().get (0).intValue(), nw);
 			
 			// I am now the root of a multicast tree;
 			
 			// start streaming
 			if (m_streamManager == null) {
-				Float f = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
-				if (f == null) {
-					f = new Float(0);
-				}
-				m_streamManager = new StreamManager(m_world, transport, f.intValue());
+				m_streamManager = new StreamManager(transport, f.intValue());
 			}
 			m_streamManager.publishNewStream(msg);
+			m_streamManager.scheduleStream(src, pid, msg.GetEventParams().get(0).intValue());
 			
 			break;
 		case SUBSCRIBE:
@@ -176,16 +180,17 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.GetEventParams().get(0));
 			nwToJoin.AddNode(m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
 
+			Float fu = m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
+			if (fu == null) {
+				fu= new Float(5000);
+			}
 			
 			// in case I'm not a publisher (most likely), I need a stream manager to be able to forward data
 			if (m_streamManager == null) {
-				Float f = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
-				if (f == null) {
-					f = new Float(0);
-				}
-				m_streamManager = new StreamManager(m_world, transport, f.intValue());
+				m_streamManager = new StreamManager(transport, fu.intValue());
 			}
-			/* send subscription message */
+			m_streamsISubscribeTo.add(msg.GetEventParams().get(0).intValue());
+			
 			
 			break;
 		case UNSUBSCRIBE:

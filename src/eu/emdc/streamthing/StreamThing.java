@@ -3,8 +3,10 @@ package eu.emdc.streamthing;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import eu.emdc.streamthing.message.*;
 import eu.emdc.streamthing.stats.Debug;
@@ -37,8 +39,18 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public int m_myStreamNodeId;
 	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
-	static public Map<Integer, Integer> m_videoStreamToStreamNodeId = new HashMap<Integer, Long>();
+	static public Map<Integer, Long> m_videoStreamToStreamNodeId = new HashMap<Integer, Long>();
 	
+	static public int GetStreamIdFromNodeId(long nodeId) {
+		Iterator<Entry<Integer, Long>> iter = m_streamIdToNodeId.entrySet().iterator()
+		while (iter.hasNext()) {
+			Entry<Integer, Long> entry = iter.next();
+			if (entry.getValue() == nodeId)
+				return entry.getKey();
+		}
+			
+		return -1;
+	}
 	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;

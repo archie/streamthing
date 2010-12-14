@@ -63,26 +63,49 @@ public class NodeWorld {
 		}
 	}
 	
-	public void RemoveNode (int nodeToBeRemovedStreamId)
+	public void RemoveNodeGraceful (int nodeToBeRemovedStreamId)
 	{
-		System.err.println("Error: Not handling node removal case");
-		/*
-		int parent = m_parentMap.get (nodeToBeRemovedStreamId);
-		List<Integer> tempvect = m_childrenMap.get (parent);
-		tempvect.remove (nodeToBeRemovedStreamId);
-		m_childrenMap.put(parent, tempvect);
-		m_parentMap.remove (nodeToBeRemovedStreamId);
+//		System.err.println("Error: Not handling node removal case");
+		System.out.println("Removing " + nodeToBeRemovedStreamId + " from " + m_videoStreamId);
+		// First correct the parent
+		int parent = m_parentMap.get (nodeToBeRemovedStreamId); // Get parent
 		
-		// Need to handle it's children as well
-		List<Integer>  childvect = m_childrenMap.get (nodeToBeRemovedStreamId);
-		// Remove all bucket entries
-		for (int i =0; i < m_listOfBuckets.size(); i++)
+		System.out.println("Parent of " + nodeToBeRemovedStreamId + " is " + parent);
+		List<Integer> tempvect = m_childrenMap.get (parent);	// Get parent's children
+		tempvect.remove((Object) nodeToBeRemovedStreamId);				// Remove node from parent's children vect
+		m_childrenMap.put(parent, tempvect);					// Update the children vect
+		m_parentMap.remove (nodeToBeRemovedStreamId);			// Remove the node from the parent map
+		
+		// Now we need to handle the children of the node
+		List<Integer>  childvect = m_childrenMap.get (nodeToBeRemovedStreamId);	// Get node's children
+		int numOfKids = childvect.size ();
+		
+		
+		for (int i = 0; i < childvect.size (); i++)
 		{
-			if (m_listOfBuckets.get(i) == nodeToBeRemovedStreamId)
-			{
-				
-			}
-		}*/
+			m_parentMap.remove(childvect.get(i));				// Remove each child from Parent map
+		}
+		
+		// Remove all bucket entries of node which is leaving
+		for (int i =0; i < MAX_CHILDREN - numOfKids; i++)
+		{
+			m_listOfBuckets.remove ((Object) nodeToBeRemovedStreamId);	// Remove all buckets from Parent map
+		}
+		
+		// Now find the orphaned children some new parents
+		for (int i = 0 ; i < childvect.size (); i++)
+		{
+			// For now, we do round robin, later, we might want to do a random join
+			int newNodeStreamId = childvect.get (i);
+			int bucket = m_listOfBuckets.get(0);
+			m_parentMap.put(newNodeStreamId, bucket);
+			List<Integer> tempvect1 =  m_childrenMap.get (bucket);
+			tempvect1.add(newNodeStreamId);
+			m_childrenMap.put (bucket, tempvect1);
+			m_listOfBuckets.remove(0);
+		}
+		
+		m_childrenMap.remove (nodeToBeRemovedStreamId);
 	}
 	
 	public List<Integer> GetChildren (int queryingNodeStreamId)

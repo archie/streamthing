@@ -82,10 +82,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			else if (event instanceof VideoMessage) {
 				VideoMessage eventMsg = (VideoMessage) event;
 				if (m_streamsISubscribeTo.contains(eventMsg.streamId))
-					m_streamManager.processVideoMessage(node, eventMsg);
+					m_streamManager.processVideoMessage(node, eventMsg, pid);
 			}
 			else if (event instanceof VideoPublishEvent) {
-				System.out.println("publish event");
+				System.out.println("publish event by " + node.getID() + " sid " + GetStreamIdFromNodeId(node.getID()));
 				m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
 			}
 			else if (event instanceof VideoTransportEvent) {
@@ -147,7 +147,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			//
 			
 			//System.out.println("I actually enter this place");
-			m_streamIdToNodeId.remove(m_myStreamNodeId);
+			//m_streamIdToNodeId.remove(m_myStreamNodeId);
 			break;
 		case PUBLISH:
 			// Add to video stream to streamNodeId map

@@ -71,6 +71,8 @@ public class StreamManager {
 		 *   
 		 */
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(src.getID());
+		//System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
+		
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(event.streamId).GetChildren(streamNodeId);
 		
 		// in this implementation using the example above, the second node will not get any packets.
@@ -78,20 +80,19 @@ public class StreamManager {
 		
 		int outRate = 5;
 		
-		for (int i = 0; i < outRate; i++) {
-			streamMsg = new VideoMessage(src);
-			streamMsg.streamId = event.streamId;
-			
-			for (int dest : children) {
-				streamMsg.destStreamNodeId= dest;
+		for (int i = 0; i < outRate; i++) {	
+				for (int dest : children) {
+					streamMsg = new VideoMessage(src);
+					streamMsg.streamId = event.streamId;
+					streamMsg.destStreamNodeId= dest;
 				
 				//if (m_output.size() <= m_queuesize) {
 					m_output.add(streamMsg);
 				//} else {
 				//	System.out.println("dropped a packet");
 				//}
-			}
-			EDSimulator.add(outRate+i, new VideoTransportEvent(), src, pid);
+				}
+				EDSimulator.add(outRate+i, new VideoTransportEvent(), src, pid);			
 		}
 		
 		
@@ -104,28 +105,47 @@ public class StreamManager {
 		}
 	}
 	
-	public void processVideoMessage(Node node, VideoMessage msg) {
+	public void processVideoMessage(Node node, VideoMessage msg, int pid) {
 		// should I forward?
 		
 		m_buffer.add(msg);
-	
-		if (true) { // only consume
+		int streamNodeId = StreamThing.GetStreamIdFromNodeId(node.getID());
+		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(msg.streamId).GetChildren(streamNodeId);
+		
+		if (children.size() == 0) { 
 			consumeVideo(node, msg.streamId);
 		} else {
-			forwardData(node);
+			//System.out.println("Stream Node ID " + streamNodeId + " forwarding stream " + msg.streamId );
+			
+			forwardData(streamNodeId, node, msg, children, pid);
 			consumeVideo(node, msg.streamId);
 		}
 		
 	}
 	
-	private void forwardData(Node node) {
-		VideoMessage msg = null; // TODO: something similar to that above
-		System.out.println("I get to forward stuffs!");
+	private void forwardData(int streamNodeId, Node node, VideoMessage messageToForward, List<Integer> children, int pid) {
+		VideoMessage streamMsg = null; 
+		int outRate = 5;
+		
+		for (int i = 0; i < outRate; i++) {	
+				for (int dest : children) {
+					streamMsg = new VideoMessage(node);
+					streamMsg.streamId = messageToForward.streamId;
+					streamMsg.destStreamNodeId= dest;
+				
+				//if (m_output.size() <= m_queuesize) {
+					m_output.add(streamMsg);
+				//} else {
+				//	System.out.println("dropped a packet");
+				//}
+				}
+				EDSimulator.add(outRate+i, new VideoTransportEvent(), node, pid);			
+		}
 	}
 	
 	private void consumeVideo(Node node, int streamId) {
 		for (VideoMessage msg : m_buffer) {
-			System.out.println(node.getID() + " consuming video msg: " + msg.id);
+			//System.out.println(StreamThing.GetStreamIdFromNodeId(node.getID()) + " consuming video msg: " + msg.id);
 		}
 		m_buffer.clear();
 	}

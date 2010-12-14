@@ -148,7 +148,13 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_streamsISubscribeTo.put(msg.streamId, msg.streamRate);
 			
 			break;
+		case LEAVE:
+			
+			// update node world
+			break;
+			
 		}
+
 	}
 
 	/** 

@@ -12,7 +12,6 @@ import peersim.transport.Transport;
 import eu.emdc.streamthing.message.VideoPublishEvent;
 import eu.emdc.streamthing.message.VideoMessage;
 
-
 public class StreamManager {
 	private StreamState m_currentState = StreamState.IDLE;
 	private Queue<VideoMessage> m_buffer; // needs to be made global
@@ -60,10 +59,26 @@ public class StreamManager {
 		}
 	}
 
+	
 	public void streamVideo(Node src, VideoPublishEvent event, int pid) {
-		int bandwidth = 0; // calculate how?
+		
+		/*
+		 *  rate control 
+		 *   if stream rate is 1000
+		 *   and two nodes are subscribing
+		 *   and your upload capacity is 1000
+		 *   
+		 *   How to divide the up capacity equal?
+		 *    - round robin?
+		 *    - all to one, push subscribing down? 
+		 */
+		
+		
+		// in this implementation using the example above, the second node will not get any packets.
 		VideoMessage streamMsg;
+		
 		int streamRate = m_streams.get(event.streamId).rate;
+		
 		for (int i = 0; i < streamRate; i++) {
 			streamMsg = new VideoMessage(src);
 			streamMsg.streamId = event.streamId;
@@ -72,12 +87,13 @@ public class StreamManager {
 				if (m_output.size() <= m_queuesize) {
 					m_output.add(streamMsg);
 				} else {
-					// count dropped messages
+					System.out.println("dropped a packet");
 				}
 			}
+			EDSimulator.add(streamRate/1000, new VideoTransportEvent(), src, pid);
 		}
 		
-		EDSimulator.add(bandwidth, new VideoTransportEvent(), src, pid);
+		
 	}
 
 	public void transportVideoMessages(Node src, int pid) {

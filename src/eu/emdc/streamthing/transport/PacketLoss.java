@@ -25,16 +25,15 @@ public class PacketLoss implements Transport {
 		
 	}
 	
-	@Override
+	
 	public long getLatency(Node src, Node dest) {
-		
-		DelayTuple dt = null;
+		System.out.println("Delay between " + src.getID() + " and " + dest.getID());
+		/*DelayTuple dt = null;
 		if ((dt = m_nodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
 				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
 			System.out.println("Delay: " + dt.GetMinDelay() + " - " + dt.GetMaxDelay());
 			return CommonState.r.nextLong() - (long)dt.GetMinDelay();
-		}
-		
+		}*/
 		return 0;
 	}
 

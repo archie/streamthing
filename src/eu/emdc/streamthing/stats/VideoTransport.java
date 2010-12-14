@@ -30,7 +30,8 @@ public class VideoTransport implements Transport {
 	
 	@Override
 	public long getLatency(Node src, Node dest) {
-		return 0;
+		Transport t = (Transport) src.getProtocol(transport);
+		return t.getLatency(src, dest);
 	}
 
 	@Override

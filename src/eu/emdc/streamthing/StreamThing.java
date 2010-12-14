@@ -32,6 +32,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
 	protected Map<Integer, Integer> m_streamsISubscribeTo; 
+	protected Map<Integer, Long> m_latestPing; 
 	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
 
@@ -63,6 +64,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		this.prefix = prefix;
 		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
 		m_streamsISubscribeTo = new HashMap<Integer, Integer>();
+		m_latestPing = new HashMap<Integer, Long>();
 		// StreamThing helpers
 		
 	}
@@ -108,6 +110,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
 			s.m_streamsISubscribeTo = new HashMap<Integer, Integer>();
+			s.m_latestPing = new HashMap<Integer, Long>();
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -153,10 +156,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// update node world
 			break;
 		case PING:
-			// do stuff
+			StreamMessage pong = new StreamMessage(MessageType.PONG, GetStreamIdFromNodeId(src.getID()));
+			transport.send(src, GetNodeFromStreamId(msg.source), pong, pid);
 			break;
 		case PONG:
-			// compare times! 
+			m_latestPing.put(msg.source, CommonState.getTime()-msg.sent);
 			break;
 		}
 
@@ -225,9 +229,20 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Notify StreamManager
 			break;
 		case TIMEOUT:
-			/*
-			 * In your serverz pinging your parent and children
-			 */
+			// check existing msgs
+			System.out.println("pingmap" + m_latestPing.size());
+			Iterator<Entry<Integer,Long>> pings = m_latestPing.entrySet().iterator();
+			while (pings.hasNext()) {
+				Entry<Integer, Long> ping = pings.next();
+				if (m_latestPing.get(ping.getKey()) > 1000) {
+					// NODE IS NOT REPLYING
+					System.out.println("Node " + ping.getKey() + " didn't reply in " + ping.getValue());
+				}
+			} 		
+			
+//			m_latestPing.clear();
+			
+			// send ping msgs
 			StreamMessage ping = new StreamMessage(MessageType.PING, GetStreamIdFromNodeId(src.getID()));
 			if (!m_streamsISubscribeTo.isEmpty()) {
 				Iterator<Entry<Integer, Integer>> streams = m_streamsISubscribeTo.entrySet().iterator();

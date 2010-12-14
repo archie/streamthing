@@ -152,7 +152,12 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			
 			// update node world
 			break;
-			
+		case PING:
+			// do stuff
+			break;
+		case PONG:
+			// compare times! 
+			break;
 		}
 
 	}
@@ -218,6 +223,26 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Remove from multicast tree
 			
 			// Notify StreamManager
+			break;
+		case TIMEOUT:
+			/*
+			 * In your serverz pinging your parent and children
+			 */
+			StreamMessage ping = new StreamMessage(MessageType.PING, GetStreamIdFromNodeId(src.getID()));
+			if (!m_streamsISubscribeTo.isEmpty()) {
+				Iterator<Entry<Integer, Integer>> streams = m_streamsISubscribeTo.entrySet().iterator();
+				while (streams.hasNext()) {
+					Entry<Integer, Integer> stream = streams.next();
+					// ping parent
+					Node parent = GetNodeFromStreamId(m_videoStreamIdToMulticastTreeMap.get(stream.getKey()).GetParent(m_myStreamNodeId));
+					transport.send(src, parent, ping, pid);
+					// ping children
+					for (int childId : m_videoStreamIdToMulticastTreeMap.get(stream.getKey()).GetChildren(m_myStreamNodeId)) {
+						Node child = GetNodeFromNodeId(childId);
+						transport.send(src, child, ping, pid);
+					}
+				}
+			}
 			break;
 		default:
 			break;

@@ -22,9 +22,7 @@ public class Initialiser implements Control {
 	private static final String PAR_INIT = "init";
 	
 	private int streamThingPid;
-	private boolean firstNode = true;
 	private Queue<StreamEvent> events;
-	private int initNodeCount = 0;
 	
 	protected final NodeInitializer[] inits;
 
@@ -53,39 +51,25 @@ public class Initialiser implements Control {
 
 			switch (event.GetEventType()) {
 			case JOIN:
-				/*Node node = (Node) Network.prototype.clone();
+				Node node = (Node) Network.prototype.clone();
 				for (int j = 0; j < inits.length; ++j) {
 					inits[j].initialize(node);
 				}
 				Network.add(node);
-				*/
-				Node node = null;
-				
-				if (initNodeCount < 1000) {
-					node = Network.get(initNodeCount);
-					initNodeCount++;
-				}
 				
 				EDSimulator.add(0, event, node, streamThingPid);
-
 				break;
 			case FAIL:
+				// TODO: brutally remove or mark as dead... not sure... if mark as dead
 				
-				for (int i = 0; i < Network.size(); i++)
-				{
-					Node n = Network.get (i);
-					if (n.getID() == StreamThing.GetNodeIdFromStreamId(event.GetNodeId()))
-					{
-						//Network.remove(i);
-						//n.setFailState(Fallible.DEAD);
-						//Debug.control("NetworkControl: Removing node " + i + " for streamId:" + event.GetNodeId());
-						break;
-					}
-				}
 				break;
 			default: /* all other events we can just go ahead and schedule */
-				
-				EDSimulator.add(0, event, getNode(StreamThing.GetNodeIdFromStreamId(event.GetNodeId())), streamThingPid);
+				Node toNode = getNodeFromStreamNodeId(event.GetNodeId());
+				if (toNode == null) {
+					Debug.control("No such node in network.");
+				} else {
+					EDSimulator.add(0, event, toNode, streamThingPid);
+				}
 				break; 
 			}
 		}
@@ -93,9 +77,10 @@ public class Initialiser implements Control {
 		return false;
 	}
 
-	private Node getNode(long nodeID) {
+	private Node getNodeFromStreamNodeId(long streamNodeID) {
+		long nodeId = StreamThing.m_streamIdToNodeId.get(streamNodeID);
 		for (int i = 0; i < Network.size(); i++) {
-			if (Network.get(i).getID() == nodeID)
+			if (Network.get(i).getID() == nodeId)
 				return Network.get(i);
 		}
 

@@ -12,6 +12,7 @@ public class StreamMessage {
 	public long sent;
 	public int streamId;
 	public long publisher;
+	public long relayer;
 	
 	public StreamMessage(MessageType type) {
 		this(type, 0);

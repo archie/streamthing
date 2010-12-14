@@ -53,8 +53,8 @@ public class StreamManager {
 		for (int i = 0; i < m_streamRate; i++) {
 			streamMsg = new VideoMessage(src);
 			streamMsg.stream_id = (int) m_streamID;
-			for (Node dest : m_world.getChildren()) {
-				streamMsg.dest = dest;
+			for (int dest : m_world.getChildren()) {
+				//streamMsg.dest = dest;
 				if (m_output.size() < m_queuesize) {
 					m_output.add(streamMsg);
 					// schedule events to empty queue acc to bandwidth

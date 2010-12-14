@@ -11,41 +11,41 @@ import peersim.core.Node;
  */
 public class NodeWorld {
 
-	private List<Node> m_children; 
-	private Node m_parent;
-	private Node m_source;
+	private List<Integer> m_children; 
+	private Integer m_parent;
+	private Integer m_source;
 	
 	public NodeWorld() {
-		m_children = new ArrayList<Node>();
+		m_children = new ArrayList<Integer>();
 	}
 	
-	public void pingChildren(Node src) {
-		for (Node child : m_children) {
+	public void pingChildren(Integer src) {
+		for (Integer child : m_children) {
 			/* or do this the other way around and keep a Map<Node, int> with last time pinged */
 		}
 	}
 	
-	public void setParent(Node node) {
+	public void setParent(Integer node) {
 		m_parent = node;
 	}
 	
-	public Node getParent() {
+	public Integer getParent() {
 		return m_parent;
 	}
 	
-	public void setSource(Node node) {
+	public void setSource(Integer node) {
 		m_source = node;
 	}
 	
-	public Node getSource() {
+	public Integer getSource() {
 		return m_source;
 	}
 	
-	public void addChild(Node node) {
+	public void addChild(Integer node) {
 		m_children.add(node);
 	}
 	
-	public List<Node> getChildren() {
+	public List<Integer> getChildren() {
 		return m_children;
 	}
 }

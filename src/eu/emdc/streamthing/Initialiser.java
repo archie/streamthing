@@ -53,11 +53,18 @@ public class Initialiser implements Control {
 
 			switch (event.GetEventType()) {
 			case JOIN:
-				Node node = (Node) Network.prototype.clone();
+				/*Node node = (Node) Network.prototype.clone();
 				for (int j = 0; j < inits.length; ++j) {
 					inits[j].initialize(node);
 				}
 				Network.add(node);
+				*/
+				Node node = null;
+				
+				if (initNodeCount < 1000) {
+					node = Network.get(initNodeCount);
+					initNodeCount++;
+				}
 				
 				EDSimulator.add(0, event, node, streamThingPid);
 
@@ -70,7 +77,7 @@ public class Initialiser implements Control {
 					if (n.getID() == StreamThing.GetNodeIdFromStreamId(event.GetNodeId()))
 					{
 						//Network.remove(i);
-						n.setFailState(Fallible.DEAD);
+						//n.setFailState(Fallible.DEAD);
 						//Debug.control("NetworkControl: Removing node " + i + " for streamId:" + event.GetNodeId());
 						break;
 					}

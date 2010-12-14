@@ -378,14 +378,35 @@ public class MSPastryProtocol implements Cloneable, EDProtocol {
             		Message data = (Message) m.body;
             		if (data.body instanceof StreamMessage) {
             			StreamMessage streamMessage = (StreamMessage) data.body;
-            			if (streamMessage.type == MessageType.SUBSCRIBE && streamMessage.source != s.m_myStreamNodeId) {
-            				if (s.isSubscribingTo(streamMessage.streamId)) {
-            					System.out.println(CommonState.getIntTime() + " CARING: streamId "  + streamMessage.streamId + " source: " + streamMessage.source + " I am: " + s.m_myStreamNodeId);
-            				}
+            			if (streamMessage.type == MessageType.SUBSCRIBE 
+            					&& streamMessage.source != s.m_myStreamNodeId)
+            			{
+            				//System.out.println(s.m_myStreamNodeId + " says lolz");
             			}
-            		} 
-            }
-            transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);
+            			if (streamMessage.type == MessageType.SUBSCRIBE 
+            					&& streamMessage.source != s.m_myStreamNodeId
+            					&& s.isSubscribingTo(streamMessage.streamId)) {
+            					
+            					// I subscribe to the same streamId, so node looking up, will subscribe from me 
+            					StreamMessage replyMessage = new StreamMessage(MessageType.SUBSCRIBE_ACK);
+            					replyMessage.streamId = streamMessage.streamId;
+            					replyMessage.relayer = s.m_myStreamNodeId;
+            					// later? replyInnerMessage.publisher = stuff
+            					replyMessage.source = s.m_myStreamNodeId;
+            					
+            					transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(m.src), replyMessage, Configuration.lookupPid("streamthing"));
+            					
+            					System.out.println(CommonState.getIntTime() + " CARING: streamId "  + streamMessage.streamId + " source: " + streamMessage.source + " I am: " + s.m_myStreamNodeId);
+            			} else {
+            				transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);
+            			}
+            		} else {
+        				transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);
+        			}
+            } else {
+            		transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);	
+            } 
+           // transport.send(nodeIdtoNode(this.nodeId), nodeIdtoNode(nexthop), m, mspastryid);	
         }
         else receiveRoute(m);
 

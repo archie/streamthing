@@ -33,9 +33,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected StreamManager m_streamManager;
 	protected NodeWorld m_world;
 	protected MSPastryProtocol m_pastry;
+	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
 	
 	static public Map< Integer, BigInteger> HashFunction = new HashMap<Integer, BigInteger>(); 
+	
 	protected List<Integer> m_mySubscriptions = new ArrayList<Integer>();
 	protected Map<Integer, Integer> m_streamToPublisherStreamNodeId = new HashMap<Integer, Integer>();
 	protected List<Integer> m_StreamsISubscribeTo = new ArrayList<Integer>();
@@ -143,6 +145,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			s.m_streamManager = null;
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
+			s.m_mySubscriptions = new ArrayList<Integer>();
+			s.m_StreamsISubscribeTo = new ArrayList<Integer>();
+			s.m_streamToPublisherStreamNodeId = new HashMap<Integer, Integer>();
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -155,9 +160,15 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		switch (msg.type) {
 		case SUBSCRIBE_ACK:
 			m_StreamsISubscribeTo.add(msg.streamId);
-			System.out.println(m_myStreamNodeId + " got a subscribe ack message from " + msg.source + " on stream id " + msg.streamId
-					+ " publisher is " + msg.publisher);
+			if (msg.publisher != msg.relayer) {
+				System.out.println(m_myStreamNodeId + " got a subscribe ack from relayer " + msg.source + " on stream id " + msg.streamId
+						+ " publisher is " + msg.publisher);
+			} else {
+				System.out.println(m_myStreamNodeId + " got a subscribe ack message from publish holder " + msg.source + " stream: " + msg.streamId);
+			}
+			
 			break;
+			
 		}
 	}
 
@@ -179,7 +190,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				
 				@Override
 				public void receive(Message m) {
-					//handleMessage(m.src, m.dest, (StreamMessage)m.body);
+					
 					// TODO Auto-generated method stub
 					Message data = (Message)m.body;
 					if (data.body instanceof StreamMessage) {
@@ -199,6 +210,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 								replyMessage.source = m_myStreamNodeId;
 								replyMessage.streamId = innerMessage.streamId;
 								replyMessage.publisher = m_streamToPublisherStreamNodeId.get(innerMessage.streamId);
+								replyMessage.relayer = replyMessage.publisher;
 								
 								// peersim hack
 								int mypid = Configuration.lookupPid("streamthing");
@@ -211,19 +223,15 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 								
 								System.out.println(m_myStreamNodeId + " received a subscribe from " + innerMessage.source + "to stream" + innerMessage.streamId);
 							} else {
-								System.out.println("severe error in input file");
+								System.out.println("ERR: subscribe msg from " + innerMessage.source + " for stream " + innerMessage.streamId + " to " + m_myStreamNodeId);
 							}
 							break;
 						}
 						
-					//String d = (String) ((Message) data).body;
-						System.out.println("received message < " +
-							m.dest + " " + innerMessage.toString() +
-							" > from address: "+ m.src);
 					}
 				}
 			});
-			
+			hasJoined = true;
 			m_pastry.join();
 			
 			break;
@@ -239,20 +247,17 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					capacity = new Float(0);
 				m_streamManager = new StreamManager(m_world, transport, msg, capacity.intValue());
 				/*m_streamManager.scheduleStream(src, pid);*/
-				Debug.info(src.getID() + " published a new stream");
+				Debug.info(msg.GetNodeId() + " published a new stream");
 			}
 					
 			/* message so that subscribers can find the stream in the network */
 			StreamMessage streamMessage = new StreamMessage(MessageType.PUBLISH);
 			streamMessage.streamId = msg.GetEventParams().get(0).intValue();
-			streamMessage.source = msg.GetNodeId();
+			streamMessage.source = m_myStreamNodeId;
 			
 			Message createMsg = new Message(streamMessage);
-			UniformRandomGenerator urg = new UniformRandomGenerator(
-                    MSPastryCommonConfig.BITS, CommonState.r);
-			BigInteger temp = urg.generate();
+			BigInteger temp = awesomeSelectionFunction(); // aka peersim pastry hack
 			createMsg.dest = temp; 
-			
 			HashFunction.put(msg.GetEventParams().get(0).intValue(), temp);
 			
 			System.out.println(temp);
@@ -269,6 +274,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			
 			Message subscribeMsg = new Message(sm);
 			subscribeMsg.dest = HashFunction.get(msg.GetEventParams().get(0).intValue());
+			
 			m_pastry.send(subscribeMsg.dest, subscribeMsg);
 
 			break;
@@ -292,5 +298,16 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	
 	public boolean isSubscribingTo(int streamId) {
 		return m_StreamsISubscribeTo.contains(streamId);
+	}
+	
+	private BigInteger awesomeSelectionFunction() {
+		List<Integer> tmp = new ArrayList<Integer>();
+		
+		for (int i = 0; i < Network.size(); i++) 
+			if (((StreamThing)Network.get(i).getProtocol(Configuration.lookupPid("streamthing"))).hasJoined)
+				tmp.add(i);
+		
+		int rndNode = CommonState.r.nextInt(tmp.size());
+		return ((MSPastryProtocol)Network.get(rndNode).getProtocol(Configuration.lookupPid("3mspastry"))).nodeId;
 	}
 }

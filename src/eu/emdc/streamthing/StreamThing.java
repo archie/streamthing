@@ -19,10 +19,6 @@ import peersim.core.IdleProtocol;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
-import peersim.pastry.MSPastryCommonConfig;
-import peersim.pastry.MSPastryProtocol;
-import peersim.pastry.Message;
-import peersim.pastry.UniformRandomGenerator;
 import peersim.transport.Transport;
 
 public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
@@ -34,15 +30,16 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected String prefix;
 	protected StreamManager m_streamManager;
 	protected NodeWorld m_world;
-	protected MSPastryProtocol m_pastry;
 	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
 	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
-	static public Map<Integer, Long> m_videoStreamToStreamNodeId = new HashMap<Integer, Long>();
+
+	static public Map<Integer, Integer> m_videoStreamToStreamNodeId = new HashMap<Integer, Integer>();
+
 	
 	static public int GetStreamIdFromNodeId(long nodeId) {
-		Iterator<Entry<Integer, Long>> iter = m_streamIdToNodeId.entrySet().iterator()
+		Iterator<Entry<Integer, Long>> iter = m_streamIdToNodeId.entrySet().iterator();
 		while (iter.hasNext()) {
 			Entry<Integer, Long> entry = iter.next();
 			if (entry.getValue() == nodeId)
@@ -102,14 +99,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		StreamThing s = null;
 		try {
 			s = (StreamThing) super.clone();
-			s.m_pastry = null;
 			s.m_world = new NodeWorld();
 			s.m_streamManager = null;
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
-			s.m_mySubscriptions = new ArrayList<Integer>();
-			s.m_StreamsISubscribeTo = new ArrayList<Integer>();
-			s.m_streamToPublisherStreamNodeId = new HashMap<Integer, Integer>();
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -150,7 +143,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_streamIdToNodeId.remove(m_myStreamNodeId);
 			break;
 		case PUBLISH:
-			m_videoStreamToStreamNodeId.put (msg.GetEventParams().get(0), m_myStreamNodeId);		
+			// Add to video stream to streamNodeId map
+			// Add to multicast tree
+			m_videoStreamToStreamNodeId.put (msg.GetEventParams().get(0).intValue(), m_myStreamNodeId);	
+			
+			// I am now the root of a multicast tree;
 			break;
 		case SUBSCRIBE:
 			
@@ -165,28 +162,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		}
 
 
-//		for (int i = 0; i < Network.size(); i++)	
-//		{
-//			Node n = Network.get(i);
-//			MSPastryProtocol p = (MSPastryProtocol) n.getProtocol(Configuration.lookupPid("3mspastry"));
-//			StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
-//			
-//			System.out.println(n.getID() + " " + s.m_streamId + " " + p.nodeId);
-//		}
 	}
 	
-	public boolean isSubscribingTo(int streamId) {
-		return m_StreamsISubscribeTo.contains(streamId);
-	}
-	
-	private BigInteger awesomeSelectionFunction() {
-		List<Integer> tmp = new ArrayList<Integer>();
-		
-		for (int i = 0; i < Network.size(); i++) 
-			if (((StreamThing)Network.get(i).getProtocol(Configuration.lookupPid("streamthing"))).hasJoined)
-				tmp.add(i);
-		
-		int rndNode = CommonState.r.nextInt(tmp.size());
-		return ((MSPastryProtocol)Network.get(rndNode).getProtocol(Configuration.lookupPid("3mspastry"))).nodeId;
-	}
 }

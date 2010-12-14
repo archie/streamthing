@@ -7,13 +7,12 @@ import java.io.*;
 
 public class NodeConfig {
 
-	Map<Integer, Map<Integer, DelayTuple> > latencyMap;
-	Map<Integer, Float > uploadCapacityMap;
+	public static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > ();
+	public static Map<Integer, Float > uploadCapacityMap =  new HashMap <Integer, Float> ();
+
 	private int m_numNodes; // Being re-used. No consequences I guess - Lalith
 	
 	public void InitialiseLatencyMap (String configFile){
-		
-		latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > ();
 		
 		try
 		{
@@ -56,9 +55,7 @@ public class NodeConfig {
 	}
 	
 	public void InitialiseUploadCapacity (String configFile){
-		
-		uploadCapacityMap = new HashMap <Integer, Float> ();
-		
+				
 		try
 		{
 			Scanner scanner = new Scanner (new File (configFile));

@@ -87,6 +87,7 @@ public class EventHelper {
 		{
 			e.printStackTrace();
 		}
+		
 	}
 	
 	public Queue<StreamEvent> GetEventQueue (){

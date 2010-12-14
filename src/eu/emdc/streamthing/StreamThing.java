@@ -36,6 +36,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
 
 	static public Map<Integer, Integer> m_videoStreamToStreamNodeId = new HashMap<Integer, Integer>();
+	
+	static public Map<Integer, NodeWorld> m_videoStreamIdToMulticastTreeMap = new HashMap<Integer, NodeWorld>();
 
 	
 	static public int GetStreamIdFromNodeId(long nodeId) {
@@ -131,7 +133,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// update stream ID
 			// update global map of stream node id to node id
 			m_myStreamNodeId = msg.GetNodeId();
-			m_streamIdToNodeId.put (m_myStreamNodeId,  src.getID());
+			StreamThing.m_streamIdToNodeId.put (m_myStreamNodeId,  src.getID());
+			
 			
 			break;
 		case LEAVE:
@@ -146,30 +149,51 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Add to video stream to streamNodeId map
 			m_videoStreamToStreamNodeId.put (msg.GetEventParams().get(0).intValue(), m_myStreamNodeId);	
 			
-			// Add to multicast tree
+			// Create new multicast tree
+
+			System.out.println(m_myStreamNodeId + " is going to publish ");
+			NodeWorld nw = new NodeWorld (msg.GetEventParams().get (0).intValue(), m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
+			m_videoStreamIdToMulticastTreeMap.put (msg.GetEventParams().get (0).intValue(), nw);
 			
 			// I am now the root of a multicast tree;
 			
 			// start streaming
 			if (m_streamManager == null) {
-				m_streamManager = new StreamManager(m_world, transport,
-						m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId()).intValue());
+				Float f = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
+				if (f == null) {
+					f = new Float(0);
+				}
+				m_streamManager = new StreamManager(m_world, transport, f.intValue());
 			}
 			m_streamManager.publishNewStream(msg);
 			
 			break;
 		case SUBSCRIBE:
+			// Join the multicast tree
+			
+			NodeWorld nwToJoin = m_videoStreamIdToMulticastTreeMap.get (msg.GetEventParams().get(0).intValue());
+			
+			System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.GetEventParams().get(0));
+			nwToJoin.AddNode(m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
+
 			
 			// in case I'm not a publisher (most likely), I need a stream manager to be able to forward data
 			if (m_streamManager == null) {
-				m_streamManager = new StreamManager(m_world, transport,
-						m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId()).intValue());
+				Float f = m_nodeConfig.GetUploadCapacityForNode(msg.GetNodeId());
+				if (f == null) {
+					f = new Float(0);
+				}
+				m_streamManager = new StreamManager(m_world, transport, f.intValue());
 			}
 			/* send subscription message */
 			
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe
+			
+			// Remove from multicast tree
+			
+			// Notify StreamManager
 			break;
 		default:
 			break;

@@ -1,6 +1,8 @@
 package eu.emdc.streamthing;
 
+import java.util.Iterator;
 import java.util.Queue;
+import java.util.Map.Entry;
 
 import eu.emdc.streamthing.stats.Debug;
 
@@ -56,7 +58,7 @@ public class Initialiser implements Control {
 				}
 				
 				Network.add(node);
-
+				//System.out.println(event.GetNodeId() + " "+ event.GetEventType());
 				EDSimulator.add(0, event, node, streamThingPid);
 				break;
 			case FAIL:
@@ -65,9 +67,10 @@ public class Initialiser implements Control {
 
 				break;
 			default: /* all other events we can just go ahead and schedule */
+				
 				Node toNode = getNodeFromStreamNodeId(event.GetNodeId());
 				if (toNode == null) {
-					// Debug.control("No such node in network.");
+					Debug.control("No such node in network. " + event.GetEventType() + " : " + event.GetNodeId());
 				} else {
 					EDSimulator.add(0, event, toNode, streamThingPid);
 				}
@@ -78,7 +81,16 @@ public class Initialiser implements Control {
 		return false;
 	}
 
-	private Node getNodeFromStreamNodeId(long streamNodeID) {
+	private Node getNodeFromStreamNodeId(int streamNodeID) {
+		/*
+		System.out.println("ZZ");
+		Iterator<Entry<Integer, Long>> iter = StreamThing.m_streamIdToNodeId.entrySet().iterator();
+		while (iter.hasNext()) {
+			Entry<Integer, Long> entry = iter.next();
+			System.out.println("in map " + entry.getKey() + " " + entry.getValue());
+				
+		}*/
+		
 		if (StreamThing.m_streamIdToNodeId.containsKey(streamNodeID)) {
 			long nodeId = StreamThing.m_streamIdToNodeId.get(streamNodeID);
 			for (int i = 0; i < Network.size(); i++) {

@@ -13,7 +13,7 @@ import peersim.core.Node;
  */
 public class NodeWorld {
 	
-	public static Integer MAX_CHILDREN = 5;
+	public Integer MAX_CHILDREN = 5;
 
 	private Map<Integer, Integer> m_parentMap = new HashMap<Integer, Integer> ();
 	private Map<Integer, List<Integer> > m_childrenMap = new HashMap<Integer, List<Integer> > ();
@@ -21,7 +21,7 @@ public class NodeWorld {
 	private Integer m_videoStreamId;
 	private Integer m_sourceNodeStreamId;
 	
-	public NodeWorld (int videoStreamId, int sourceNodeStreamId)
+	public NodeWorld (int videoStreamId, int sourceNodeStreamId, float capacity)
 	{
 		m_videoStreamId = videoStreamId;
 		m_sourceNodeStreamId = sourceNodeStreamId;
@@ -29,13 +29,15 @@ public class NodeWorld {
 		m_childrenMap.put(m_sourceNodeStreamId, temp);
 		m_parentMap.put (m_sourceNodeStreamId, -1);
 		
+		System.out.println(sourceNodeStreamId + " has capacity " + capacity);
 		for (int i = 0; i < MAX_CHILDREN; i++)
 		{
 			m_listOfBuckets.add (sourceNodeStreamId);
 		}
+		System.out.println("Creating NW with root: " + sourceNodeStreamId + " " + videoStreamId);
 	}
 	
-	public void AddNode (int newNodeStreamId)
+	public void AddNode (int newNodeStreamId, float capacity)
 	{
 		// Iterate through MTree to find location
 		// For now, we do round robin, later, we might want to do a random join
@@ -45,10 +47,19 @@ public class NodeWorld {
 		tempvect.add(newNodeStreamId);
 		m_childrenMap.put (bucket, tempvect);
 		m_listOfBuckets.remove(0);
-		
+		System.out.println(newNodeStreamId + " has capacity " + capacity);
+		m_childrenMap.put (newNodeStreamId, new ArrayList<Integer> ());
 		for (int i = 0; i < MAX_CHILDREN; i++)
 		{
 			m_listOfBuckets.add (newNodeStreamId);
+		}
+		
+		System.out.println("Adding: " + newNodeStreamId);
+		System.out.println("Parent is: " + bucket);
+		
+		for (int i = 0; i < m_childrenMap.get (bucket).size(); i++)
+		{
+			System.out.println("With child: " + m_childrenMap.get (bucket).get(i));
 		}
 	}
 	

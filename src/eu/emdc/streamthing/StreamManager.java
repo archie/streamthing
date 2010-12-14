@@ -7,7 +7,7 @@ import peersim.core.Node;
 import peersim.edsim.EDSimulator;
 import peersim.transport.Transport;
 
-import eu.emdc.streamthing.message.PublishVideoEvent;
+import eu.emdc.streamthing.message.VideoPublishEvent;
 import eu.emdc.streamthing.message.VideoMessage;
 
 
@@ -40,37 +40,38 @@ public class StreamManager {
 		m_buffer = new LinkedList<VideoMessage>(); // FIFO
 	}
 	
-	public void scheduleStream(Node src, int pid) {
-		PublishVideoEvent pve = new PublishVideoEvent();
+	public void scheduleStream(Node src, int pid, int streamId) {
+		VideoPublishEvent pve = new VideoPublishEvent();
+		pve.streamId = streamId;
 		for (int i = 0; i < m_streamDuration; i++) {
 			EDSimulator.add(i, pve, src, pid);
 		}
 	}
 
-	public void streamVideo(Node src, int pid) {
+	public void streamVideo(Node src, VideoPublishEvent event, int pid) {
+		int bandwidth = 0; // calculate how?
 		VideoMessage streamMsg;
 
 		for (int i = 0; i < m_streamRate; i++) {
 			streamMsg = new VideoMessage(src);
-			streamMsg.stream_id = (int) m_streamID;
-			for (int dest : m_world.getChildren()) {
-				//streamMsg.dest = dest;
-				if (m_output.size() < m_queuesize) {
+			streamMsg.streamId = event.streamId;
+			for (int dest : m_world.GetChildren(StreamThing.GetStreamIdFromNodeId(src.getID()))) {
+				streamMsg.destStreamNodeId= dest;
+				if (m_output.size() <= m_queuesize) {
 					m_output.add(streamMsg);
-					// schedule events to empty queue acc to bandwidth
-					int bandwidth = 0;
-					EDSimulator.add(bandwidth, new VideoTransportEvent(), src, pid);
 				} else {
 					// count dropped messages
 				}
 			}
 		}
+		
+		EDSimulator.add(bandwidth, new VideoTransportEvent(), src, pid);
 	}
 
 	public void transportVideoMessages(Node src, int pid) {
 		VideoMessage msg;
 		while ((msg = m_output.poll()) != null) {
-			m_transport.send(src, msg.dest, msg, pid);
+			m_transport.send(src, StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId)), msg, pid);
 		}
 	}
 	
@@ -91,11 +92,11 @@ public class StreamManager {
 			break;
 		case VIEW:
 			// expect incoming msgs - no need to process, perhaps measure something? 
-			consumeVideo(node);
+			consumeVideo(node, msg.streamId);
 			break;
 		case VIEWnFORWARD:
 			// measure something? and send stuff!
-			consumeVideo(node);
+			consumeVideo(node, msg.streamId);
 			forwardData(node);
 			break;
 		default:
@@ -104,16 +105,11 @@ public class StreamManager {
 	}
 	
 	private void forwardData(Node node) {
-		VideoMessage msg = null;
-		while ((msg = m_buffer.poll()) != null) {
-			/* 
-			 * for all children
-			 *   forward msg
-			 */
-		}
+		VideoMessage msg = null; // TODO: something similar to that above
+		
 	}
 	
-	private void consumeVideo(Node node) {
+	private void consumeVideo(Node node, int streamId) {
 		for (VideoMessage msg : m_buffer) {
 			System.out.println(node.getID() + " consuming video msg: " + msg.id);
 		}

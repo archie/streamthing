@@ -1,8 +1,5 @@
 package eu.emdc.streamthing.transport;
 
-import java.util.Map;
-import java.util.Queue;
-
 import eu.emdc.streamthing.DelayTuple;
 import eu.emdc.streamthing.NodeConfig;
 import eu.emdc.streamthing.StreamThing;
@@ -34,6 +31,7 @@ public class PacketLoss implements Transport {
 		DelayTuple dt = null;
 		if ((dt = m_nodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
 				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
+			System.out.println("Delay: " + dt.GetMinDelay() + " - " + dt.GetMaxDelay());
 			return CommonState.r.nextLong() - (long)dt.GetMinDelay();
 		}
 		

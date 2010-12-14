@@ -49,11 +49,18 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		return -1;
 	}
 	
+	static public Node GetNodeFromNodeId(long nodeId) {
+		for (int i = 0; i < Network.size(); i++) {
+			if (Network.get(i).getID() == nodeId)
+				return Network.get(i);
+		}
+		return null;
+	}
+	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
 		// StreamThing helpers
-		m_world = new NodeWorld();
 		
 	}
 
@@ -72,8 +79,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			else if (event instanceof VideoMessage) {
 				m_streamManager.processVideoMessage(node, (VideoMessage) event);
 			}
-			else if (event instanceof PublishVideoEvent) {
-				m_streamManager.streamVideo(node, pid);
+			else if (event instanceof VideoPublishEvent) {
+				m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
 			}
 			else if (event instanceof VideoTransportEvent) {
 				m_streamManager.transportVideoMessages(node, pid);
@@ -92,7 +99,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		StreamThing s = null;
 		try {
 			s = (StreamThing) super.clone();
-			s.m_world = new NodeWorld();
+			s.m_world = null;
 			s.m_streamManager = null;
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;

@@ -1,7 +1,6 @@
 package eu.emdc.streamthing.message;
 
 import peersim.core.CommonState;
-import peersim.core.Node;
 
 public class StreamMessage {
 	
@@ -11,8 +10,8 @@ public class StreamMessage {
 	public String description; 
 	public long sent;
 	public int streamId;
-	public long publisher;
-	public long relayer;
+	public int streamRate;
+	
 	
 	public StreamMessage(MessageType type) {
 		this(type, 0);

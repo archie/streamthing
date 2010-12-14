@@ -31,7 +31,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected StreamManager m_streamManager;
 	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
-	protected List<Integer> m_streamsISubscribeTo; 
+	protected Map<Integer, Integer> m_streamsISubscribeTo; 
 	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
 
@@ -62,7 +62,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
-		m_streamsISubscribeTo = new ArrayList<Integer>();
+		m_streamsISubscribeTo = new HashMap<Integer, Integer>();
 		// StreamThing helpers
 		
 	}
@@ -81,11 +81,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			}
 			else if (event instanceof VideoMessage) {
 				VideoMessage eventMsg = (VideoMessage) event;
-				if (m_streamsISubscribeTo.contains(eventMsg.streamId))
+				if (m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
 					m_streamManager.processVideoMessage(node, eventMsg, pid);
 			}
 			else if (event instanceof VideoPublishEvent) {
-				System.out.println("publish event by " + node.getID() + " sid " + GetStreamIdFromNodeId(node.getID()));
 				m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
 			}
 			else if (event instanceof VideoTransportEvent) {
@@ -108,7 +107,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			s.m_streamManager = null;
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
-			s.m_streamsISubscribeTo = new ArrayList<Integer>();
+			s.m_streamsISubscribeTo = new HashMap<Integer, Integer>();
 			
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
@@ -118,9 +117,37 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 	/* protocol methods */
 	private void handleMessage(Node src, StreamMessage msg, int pid) {
-		switch (msg.type) {
-		case SUBSCRIBE_ACK:
+		Transport transport = (Transport) src.getProtocol(FastConfig
+				.getTransport(pid));
 		
+		switch (msg.type) {
+		case SUBSCRIBE:
+			System.out.println("got subscribe from " + msg.source + " sending ack with rate");
+			StreamMessage replyAck = new StreamMessage(MessageType.SUBSCRIBE_ACK, GetStreamIdFromNodeId(src.getID()));
+			replyAck.streamRate = 500;
+			replyAck.streamId = msg.streamId;
+			Node dest = GetNodeFromStreamId(msg.source);
+			transport.send(src, dest, replyAck, pid);
+			break;
+		case SUBSCRIBE_ACK:
+			// Join the multicast tree
+			
+			NodeWorld nwToJoin = m_videoStreamIdToMulticastTreeMap.get (msg.streamId);	
+			nwToJoin.AddNode(m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
+
+			// in case I'm not a publisher (most likely), I need a stream manager to be able to forward data
+			if (m_streamManager == null) {
+				Float fu = m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
+				if (fu == null) {
+					fu= new Float(5000);
+				}
+				m_streamManager = new StreamManager(transport, fu.intValue());
+			}
+			
+			System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.streamId + " with rate " + msg.streamRate);
+			m_streamsISubscribeTo.put(msg.streamId, msg.streamRate);
+			
+			break;
 		}
 	}
 
@@ -173,25 +200,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			
 			break;
 		case SUBSCRIBE:
-			// Join the multicast tree
-			
-			NodeWorld nwToJoin = m_videoStreamIdToMulticastTreeMap.get (msg.GetEventParams().get(0).intValue());
-			
-			System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.GetEventParams().get(0));
-			nwToJoin.AddNode(m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
-
-			Float fu = m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
-			if (fu == null) {
-				fu= new Float(5000);
-			}
-			
-			// in case I'm not a publisher (most likely), I need a stream manager to be able to forward data
-			if (m_streamManager == null) {
-				m_streamManager = new StreamManager(transport, fu.intValue());
-			}
-			m_streamsISubscribeTo.add(msg.GetEventParams().get(0).intValue());
-			
-			
+			/* send subscribe msg to publisher */
+			StreamMessage subscribeMessage = new StreamMessage(MessageType.SUBSCRIBE, msg.GetNodeId());
+			subscribeMessage.streamId = msg.GetEventParams().get(0).intValue();
+			Node dest = GetNodeFromStreamId(m_videoStreamToStreamNodeId.get(msg.GetEventParams().get(0).intValue()));
+			transport.send(src, dest, subscribeMessage, pid);
 			break;
 		case UNSUBSCRIBE:
 			// do unsubscribe
@@ -205,6 +218,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		}
 
 
+	}
+	
+	public static Node GetNodeFromStreamId(int streamId) {
+		return GetNodeFromNodeId(m_streamIdToNodeId.get(streamId));
 	}
 	
 }

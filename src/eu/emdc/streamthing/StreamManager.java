@@ -128,18 +128,18 @@ public class StreamManager {
 		int outRate = 5;
 		
 		for (int i = 0; i < outRate; i++) {	
-				for (int dest : children) {
-					streamMsg = new VideoMessage(node);
-					streamMsg.streamId = messageToForward.streamId;
-					streamMsg.destStreamNodeId= dest;
+			for (int dest : children) {
+				streamMsg = new VideoMessage(node);
+				streamMsg.streamId = messageToForward.streamId;
+				streamMsg.destStreamNodeId= dest;
 				
 				//if (m_output.size() <= m_queuesize) {
-					m_output.add(streamMsg);
+				m_output.add(streamMsg);
 				//} else {
 				//	System.out.println("dropped a packet");
 				//}
-				}
-				EDSimulator.add(outRate+i, new VideoTransportEvent(), node, pid);			
+			}
+			EDSimulator.add(outRate+i, new VideoTransportEvent(), node, pid);			
 		}
 	}
 	

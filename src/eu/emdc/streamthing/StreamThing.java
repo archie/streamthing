@@ -266,6 +266,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		case TIMEOUT:
 			
 			// check existing msgs
+<<<<<<< HEAD
 			// System.out.println("pingmap" + m_latestPing.size());
 			Iterator<Entry<Integer, List<Integer> >> boo = m_latestPing.entrySet().iterator();
 			
@@ -277,6 +278,15 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				{
 					System.out.println(m_myStreamNodeId + " Me no receive pong from " + vect.get(i) + " :(");
 					m_videoStreamIdToMulticastTreeMap.get (entry.getKey()).RemoveNodeGraceful(vect.get(i));
+=======
+			//System.out.println("pingmap" + m_latestPing.size());
+			Iterator<Entry<Integer,Long>> pings = m_latestPing.entrySet().iterator();
+			while (pings.hasNext()) {
+				Entry<Integer, Long> ping = pings.next();
+				if (m_latestPing.get(ping.getKey()) > 1000) {
+					// NODE IS NOT REPLYING
+					System.out.println("Node " + ping.getKey() + " didn't reply in " + ping.getValue());
+>>>>>>> 6b7d0fd9dd00c498faae805df76c6c6224000d73
 				}
 			}
 			

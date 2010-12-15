@@ -101,7 +101,12 @@ public class StreamManager {
 	public void transportVideoMessages(Node src, int pid) {
 		VideoMessage msg;
 		while ((msg = m_output.poll()) != null) {
-			m_transport.send(src, StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId)), msg, pid);
+			
+			if(StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
+			{
+				//System.out.println(src.getID() + " with stream node Id " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " is sending to " + msg.destStreamNodeId);
+				//m_transport.send(src, StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId)), msg, pid);
+			}
 		}
 	}
 	
@@ -116,7 +121,6 @@ public class StreamManager {
 			consumeVideo(node, msg.streamId);
 		} else {
 			//System.out.println("Stream Node ID " + streamNodeId + " forwarding stream " + msg.streamId );
-			
 			forwardData(streamNodeId, node, msg, children, pid);
 			consumeVideo(node, msg.streamId);
 		}

@@ -5,15 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import peersim.core.Node;
-
 /**
  * Maintains the multicast tree(s)
  *
  */
 public class NodeWorld {
 	
-	public Integer MAX_CHILDREN = 2;
+	public Integer MAX_CHILDREN = 10;
 
 	private Map<Integer, Integer> m_parentMap = new HashMap<Integer, Integer> ();
 	private Map<Integer, List<Integer> > m_childrenMap = new HashMap<Integer, List<Integer> > ();

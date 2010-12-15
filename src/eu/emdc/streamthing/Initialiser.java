@@ -59,14 +59,16 @@ public class Initialiser implements Control {
 					inits[j].initialize(node);
 				}
 				
-				Network.add(node);
-				//System.out.println(event.GetNodeId() + " "+ event.GetEventType());
+				if (StreamThing.m_streamIdToNodeId.containsKey(event.GetNodeId())) {
+					getNodeFromStreamNodeId(event.GetNodeId()).setFailState(Fallible.OK);
+				} else {
+					Network.add(node);
+				}
+				
 				EDSimulator.add(0, event, node, streamThingPid);
 				break;
 			case FAIL:
-				// TODO: brutally remove or mark as dead... not sure... if mark
-				// as dead
-				getNodeFromStreamNodeId(event.GetNodeId()).setFailState(Fallible.DEAD);
+				getNodeFromStreamNodeId(event.GetNodeId()).setFailState(Fallible.DOWN);
 				break;
 			default: /* all other events we can just go ahead and schedule */
 				

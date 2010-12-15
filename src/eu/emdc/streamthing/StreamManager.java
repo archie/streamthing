@@ -23,7 +23,6 @@ public class StreamManager {
 	private VideoBuffer<VideoMessage> m_output;
 	private int m_queuesize;
 	private int m_uploadCapacity;
-	private int m_availableCapacity;
 	
 	class StreamData {
 		public int duration;
@@ -42,7 +41,6 @@ public class StreamManager {
 		m_output = new VideoBuffer<VideoMessage>(m_queuesize);
 		m_buffer = new LinkedList<VideoMessage>(); 
 		m_uploadCapacity = uploadCapacity;
-		m_availableCapacity = uploadCapacity; 
 		System.out.println("Upload capacity is: " + m_uploadCapacity);
 	}
 	
@@ -114,17 +112,20 @@ public class StreamManager {
 	
 	private void sendData(Node node, int streamId, int streamRate, List<Integer> children, int pid) {
 		VideoMessage streamMsg = null; 
-		for (int dest : children) {
+		for (int dest : children) 
+		{
 			streamMsg = new VideoMessage(node);
 			streamMsg.streamId = streamId;
 			streamMsg.destStreamNodeId= dest;
 			streamMsg.streamRate = streamRate;
-			System.out.println("adding to queue");
-			if (!m_output.add(streamMsg)) {
-				System.out.println("dropped a packet");
+			
+			if (!m_output.add(streamMsg)) 
+			{
+				MessageStatistics.dropped(StreamThing.GetStreamIdFromNodeId(node.getID()));
 			}
-			System.out.println("queue size is " + m_output.size());
-			if (m_output.size() == 1) {
+			
+			if (m_output.size() == 1) 
+			{
 				EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), node, pid);
 			}
 		}
@@ -134,15 +135,7 @@ public class StreamManager {
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(node.getID());
 		for (VideoMessage msg : m_buffer) {
 			long latency = CommonState.getTime() - msg.sent;
-			if (MessageStatistics.messageCountMap.containsKey(streamNodeId)) {
-				int d = MessageStatistics.messageCountMap.get(streamNodeId);
-				MessageStatistics.messageCountMap.put(streamNodeId, d++);
-				long oldLatency = MessageStatistics.latencyMap.get(streamNodeId);
-				MessageStatistics.latencyMap.put(streamNodeId, oldLatency+latency);
-			} else {
-				MessageStatistics.messageCountMap.put(streamNodeId, 1);
-				MessageStatistics.latencyMap.put(streamNodeId, latency);
-			}
+			MessageStatistics.latency(streamNodeId, latency);
 			// jitter
 		}
 		System.out.println("consuming");

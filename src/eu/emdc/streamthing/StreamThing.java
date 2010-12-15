@@ -230,7 +230,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			break;
 		case TIMEOUT:
 			// check existing msgs
-			System.out.println("pingmap" + m_latestPing.size());
+			//System.out.println("pingmap" + m_latestPing.size());
 			Iterator<Entry<Integer,Long>> pings = m_latestPing.entrySet().iterator();
 			while (pings.hasNext()) {
 				Entry<Integer, Long> ping = pings.next();

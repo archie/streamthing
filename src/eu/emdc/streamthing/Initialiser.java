@@ -9,6 +9,7 @@ import eu.emdc.streamthing.stats.Debug;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
+import peersim.core.Fallible;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.dynamics.NodeInitializer;
@@ -64,7 +65,7 @@ public class Initialiser implements Control {
 			case FAIL:
 				// TODO: brutally remove or mark as dead... not sure... if mark
 				// as dead
-
+				getNodeFromStreamNodeId(event.GetNodeId()).setFailState(Fallible.DEAD);
 				break;
 			default: /* all other events we can just go ahead and schedule */
 				

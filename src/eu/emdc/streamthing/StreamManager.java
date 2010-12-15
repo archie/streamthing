@@ -75,7 +75,10 @@ public class StreamManager {
 		System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(event.streamId).GetChildren(streamNodeId);
 		StreamData streamData = m_streams.get(event.streamId);
-		sendData(src, event.streamId, streamData.rate, children, pid);
+		if (children != null)
+		{
+			sendData(src, event.streamId, streamData.rate, children, pid);
+		}
 		if ((CommonState.getTime() + 1000/streamData.rate) < (streamData.started + streamData.duration)) {
 			EDSimulator.add(1000/streamData.rate, event, src, pid);
 		}
@@ -104,7 +107,7 @@ public class StreamManager {
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(msg.streamId).GetChildren(streamNodeId);
 		
 		// should I forward too?
-		if (children.size() > 0) { 
+		if (children != null && children.size() > 0) { 
 			sendData(node, msg.streamId, msg.streamRate, children, pid);
 			consumeVideo(node, msg.streamId);
 		} else {	
@@ -114,7 +117,8 @@ public class StreamManager {
 	}
 	
 	private void sendData(Node node, int streamId, int streamRate, List<Integer> children, int pid) {
-		VideoMessage streamMsg = null; 
+		VideoMessage streamMsg = null;
+
 		for (int dest : children) 
 		{
 			streamMsg = new VideoMessage(node);
@@ -132,6 +136,7 @@ public class StreamManager {
 				EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), node, pid);
 			}
 		}
+		
 	}
 	
 	private void consumeVideo(Node node, int streamId) {

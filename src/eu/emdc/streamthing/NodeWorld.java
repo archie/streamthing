@@ -59,7 +59,20 @@ public class NodeWorld {
 		{
 			return;
 		}
-			
+
+		// Publisher dies
+		if (m_parentMap.get(nodeToBeRemovedStreamId) == -1)
+		{
+			m_parentMap.remove(nodeToBeRemovedStreamId);
+			m_childrenMap.remove (nodeToBeRemovedStreamId);
+			return;
+		}
+		
+		// If someone still expects the publisher to be around
+		if (!m_parentMap.containsKey(m_sourceNodeStreamId))
+		{
+			return;
+		}
 		
 //		System.err.println("Error: Not handling node removal case");
 		System.out.println("Removing " + nodeToBeRemovedStreamId + " from " + m_videoStreamId);
@@ -143,8 +156,15 @@ public class NodeWorld {
 		return m_childrenMap.get (queryingNodeStreamId);
 	}
 	
-	public int GetParent (int queryingNodeStreamId)
+	public Integer GetParent (int queryingNodeStreamId)
 	{
-		return m_parentMap.get(queryingNodeStreamId);
+		if (m_parentMap.containsKey(queryingNodeStreamId))
+		{
+			return m_parentMap.get(queryingNodeStreamId);
+		}
+		else
+		{
+			return null;
+		}
 	}
 }

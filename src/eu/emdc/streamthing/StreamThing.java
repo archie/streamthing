@@ -215,7 +215,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				Entry<Integer, Integer> entry = iter.next();
 				m_videoStreamIdToMulticastTreeMap.get (entry.getKey()).RemoveNodeGraceful(m_myStreamNodeId);
 			}
-			m_streamIdToNodeId.remove(m_myStreamNodeId);
+			//m_streamIdToNodeId.remove(m_myStreamNodeId);
 			m_streamsISubscribeTo.clear ();
 			
 			//System.out.println("I actually enter this place");
@@ -259,7 +259,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Remove from multicast tree
 			
 			m_videoStreamIdToMulticastTreeMap.get (msg.GetEventParams().get(0).intValue()).RemoveNodeGraceful(m_myStreamNodeId);
-			m_streamIdToNodeId.remove(m_myStreamNodeId);
+			//m_streamIdToNodeId.remove(m_myStreamNodeId);
 			m_streamsISubscribeTo.remove((Object) msg.GetEventParams().get(0).intValue());
 			// Notify StreamManager
 			break;

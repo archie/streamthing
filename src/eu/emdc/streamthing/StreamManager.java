@@ -82,12 +82,13 @@ public class StreamManager {
 	}
 
 	public void transportVideoMessages(Node src, int pid) {
-		System.out.println("popping msg from queue" + m_output.size());
 		VideoMessage msg;
 		msg = m_output.get();
 		if (msg != null) {
 			System.out.println("sending message from " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + msg.destStreamNodeId);
-			m_transport.send(src, StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId)), msg, pid);
+			Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
+			if (dest != null)
+				m_transport.send(src, dest, msg, pid);
 		}
 		if (m_output.size() > 0) {
 			EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
@@ -101,7 +102,6 @@ public class StreamManager {
 		
 		// should I forward too?
 		if (children.size() > 0) { 
-			System.out.println(StreamThing.GetStreamIdFromNodeId(node.getID()) + " forwarding to " + children.size());
 			sendData(node, msg.streamId, msg.streamRate, children, pid);
 			consumeVideo(node, msg.streamId);
 		} else {	
@@ -138,7 +138,6 @@ public class StreamManager {
 			MessageStatistics.latency(streamNodeId, latency);
 			// jitter
 		}
-		System.out.println("consuming");
 		m_buffer.clear();
 	}
 }

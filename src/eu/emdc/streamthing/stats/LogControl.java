@@ -40,7 +40,7 @@ public class LogControl implements Control {
 			Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry)it.next();
-				dataOutStream.print("packets: " + ((NodeData)pairs.getValue()).packets + "\t" + "\t" + pairs.getKey());
+				dataOutStream.print("packets: " + ((NodeData)pairs.getValue()).packets + "\t" + pairs.getKey());
 				dataOutStream.println();
 			}
 			
@@ -49,6 +49,13 @@ public class LogControl implements Control {
 				Entry<Integer, Long> latencyEntry = latencies.next();
 				dataOutStream.println("latency: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
 			}
+			
+			Iterator<Entry<Integer, Integer>> drops = MessageStatistics.droppedMap.entrySet().iterator();
+			while (drops.hasNext()) {
+				Entry<Integer, Integer> dropEntry = drops.next();
+				dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
+			}
+			
 			
 			dataOutStream.close();
 		} catch (IOException ex) {

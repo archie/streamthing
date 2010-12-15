@@ -47,7 +47,6 @@ public class StreamManager {
 	}
 	
 	public void publishNewStream(StreamEvent pubEvent) {
-		// parse pubEvent
 		m_streams.put(pubEvent.GetEventParams().get(0).intValue(),
 				new StreamData(pubEvent.GetEventParams().get(1).intValue(), 
 						pubEvent.GetEventParams().get(2).intValue(), CommonState.getTime()));
@@ -58,7 +57,6 @@ public class StreamManager {
 		VideoPublishEvent pve = new VideoPublishEvent();
 		pve.streamId = streamId;
 		streamVideo(src, pve, pid);
-		EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
 	}
 
 	
@@ -86,13 +84,16 @@ public class StreamManager {
 	}
 
 	public void transportVideoMessages(Node src, int pid) {
+		System.out.println("popping msg from queue" + m_output.size());
 		VideoMessage msg;
 		msg = m_output.get();
 		if (msg != null) {
-			System.out.println("sending message. Messages left " + m_output.size());
+			System.out.println("sending message from " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + msg.destStreamNodeId);
 			m_transport.send(src, StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId)), msg, pid);
 		}
-		EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
+		if (m_output.size() > 0) {
+			EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
+		}
 	}
 	
 	public void processVideoMessage(Node node, VideoMessage msg, int pid) {
@@ -102,8 +103,8 @@ public class StreamManager {
 		
 		// should I forward too?
 		if (children.size() > 0) { 
-			//sendData(node, msg.streamId, msg.streamRate, children, pid);
-			//EDSimulator.add(0, new VideoTransportEvent(), node, pid);
+			System.out.println(StreamThing.GetStreamIdFromNodeId(node.getID()) + " forwarding to " + children.size());
+			sendData(node, msg.streamId, msg.streamRate, children, pid);
 			consumeVideo(node, msg.streamId);
 		} else {	
 			consumeVideo(node, msg.streamId);
@@ -121,6 +122,10 @@ public class StreamManager {
 			System.out.println("adding to queue");
 			if (!m_output.add(streamMsg)) {
 				System.out.println("dropped a packet");
+			}
+			System.out.println("queue size is " + m_output.size());
+			if (m_output.size() == 1) {
+				EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), node, pid);
 			}
 		}
 	}

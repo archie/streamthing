@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="streamthing" default="run" basedir=".">
   <property name="classes.dir" value="build/classes" />
-  <property name="lib.dir" value="/Users/lalith/Downloads/peersim-1.0.5/" />
+  <property name="lib.dir" value="../p2p" />
   <property name="main-class" value="peersim.Simulator" />
   
   <path id="classpath">

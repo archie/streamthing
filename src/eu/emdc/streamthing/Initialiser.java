@@ -49,6 +49,7 @@ public class Initialiser implements Control {
 				&& CommonState.getTime() == this.events.peek()
 						.GetExecutionTime()) {
 			StreamEvent event = this.events.remove();
+			
 
 			switch (event.GetEventType()) {
 			case JOIN:

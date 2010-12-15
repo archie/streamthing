@@ -165,13 +165,13 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// update node world
 			break;
 		case PING:
-			System.out.println(m_myStreamNodeId + " received a ping from " + msg.source);
+			//System.out.println(m_myStreamNodeId + " received a ping from " + msg.source);
 			StreamMessage pong = new StreamMessage(MessageType.PONG, GetStreamIdFromNodeId(src.getID()));
 			pong.streamId = msg.streamId;
 			transport.send(src, GetNodeFromStreamId(msg.source), pong, pid);
 			break;
 		case PONG:
-			System.out.println(m_myStreamNodeId + " received a pong from " + msg.source);
+			//System.out.println(m_myStreamNodeId + " received a pong from " + msg.source);
 			List<Integer> vect = m_latestPing.get(msg.streamId);
 			
 			for (int i = 0; i < vect.size (); i++)

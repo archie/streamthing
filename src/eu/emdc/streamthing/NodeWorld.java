@@ -96,6 +96,10 @@ public class NodeWorld {
 		
 		// Now we need to handle the children of the node
 		List<Integer>  childvect = m_childrenMap.get (nodeToBeRemovedStreamId);		// Get node's children
+		
+		if (childvect == null)
+			childvect = new ArrayList<Integer> ();
+		
 		int numOfKids = childvect.size ();
 		
 		

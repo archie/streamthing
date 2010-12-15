@@ -72,6 +72,8 @@ public class StreamManager {
 		 *   
 		 */
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(src.getID());
+		if (streamNodeId == -1) // Lag from failure
+			return;
 		System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(event.streamId).GetChildren(streamNodeId);
 		StreamData streamData = m_streams.get(event.streamId);
@@ -88,7 +90,7 @@ public class StreamManager {
 		VideoMessage msg;
 		msg = m_output.get();
 		if (msg != null) {
-			System.out.println("sending message from " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + msg.destStreamNodeId);
+			//System.out.println("sending message from " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + msg.destStreamNodeId);
 			if (StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
 			{
 				Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));

@@ -20,6 +20,7 @@ public class StreamManager {
 	private Map<Integer, StreamData> m_streams = new HashMap<Integer, StreamData>();
 	private Transport m_transport;
 	private Queue<VideoMessage> m_output;
+	private VideoBuffer<VideoMessage> m_out;
 	private int m_queuesize;
 	
 	class StreamData {
@@ -34,8 +35,9 @@ public class StreamManager {
 	public StreamManager(Transport transport, int uploadCapacity) {
 		m_transport = transport;
 		m_output = new LinkedList<VideoMessage>();
-
 		m_queuesize = 5000;
+		m_out = new VideoBuffer<VideoMessage>(m_queuesize);
+		
 		m_buffer = new LinkedList<VideoMessage>(); // FIFO
 	}
 	

@@ -55,5 +55,9 @@ public class VideoBuffer<T> {
 	public boolean isFull() {
 		return current_size == max_size;
 	}
+	
+	public int size() {
+		return max_size;
+	}
 
 }

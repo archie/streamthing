@@ -57,7 +57,7 @@ public class VideoBuffer<T> {
 	}
 	
 	public int size() {
-		return max_size;
+		return current_size;
 	}
 
 }

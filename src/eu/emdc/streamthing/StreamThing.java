@@ -83,6 +83,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			}
 			else if (event instanceof VideoMessage) {
 				VideoMessage eventMsg = (VideoMessage) event;
+				System.out.println("got video");
 				if (m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
 					m_streamManager.processVideoMessage(node, eventMsg, pid);
 			}
@@ -211,7 +212,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				m_streamManager = new StreamManager(transport, f.intValue());
 			}
 			m_streamManager.publishNewStream(msg);
-			m_streamManager.scheduleStream(src, pid, msg.GetEventParams().get(0).intValue());
+			m_streamManager.startStream(src, pid, msg.GetEventParams().get(0).intValue());
 			
 			break;
 		case SUBSCRIBE:

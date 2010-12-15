@@ -13,7 +13,7 @@ import peersim.core.Node;
  */
 public class NodeWorld {
 	
-	public Integer MAX_CHILDREN = 1;
+	public Integer MAX_CHILDREN = 5;
 
 	private Map<Integer, Integer> m_parentMap = new HashMap<Integer, Integer> ();
 	private Map<Integer, List<Integer> > m_childrenMap = new HashMap<Integer, List<Integer> > ();

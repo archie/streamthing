@@ -6,56 +6,59 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import peersim.core.CommonState;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
 import peersim.transport.Transport;
 
 import eu.emdc.streamthing.message.VideoPublishEvent;
 import eu.emdc.streamthing.message.VideoMessage;
+import eu.emdc.streamthing.stats.MessageStatistics;
 
 public class StreamManager {
-	private StreamState m_currentState = StreamState.IDLE;
 	private Queue<VideoMessage> m_buffer; // needs to be made global
 	
 	private Map<Integer, StreamData> m_streams = new HashMap<Integer, StreamData>();
 	private Transport m_transport;
-	private Queue<VideoMessage> m_output;
-	private VideoBuffer<VideoMessage> m_out;
+	private VideoBuffer<VideoMessage> m_output;
 	private int m_queuesize;
+	private int m_uploadCapacity;
+	private int m_availableCapacity;
 	
 	class StreamData {
 		public int duration;
 		public int rate;
-		public StreamData(int duration, int rate) {
+		public long started;
+		public StreamData(int duration, int rate, long started) {
 			this.duration = duration;
 			this.rate = rate;
+			this.started = started;
 		}
 	}
 	
 	public StreamManager(Transport transport, int uploadCapacity) {
 		m_transport = transport;
-		m_output = new LinkedList<VideoMessage>();
-		m_queuesize = 5000;
-		m_out = new VideoBuffer<VideoMessage>(m_queuesize);
-		
-		m_buffer = new LinkedList<VideoMessage>(); // FIFO
+		m_queuesize = 5;
+		m_output = new VideoBuffer<VideoMessage>(m_queuesize);
+		m_buffer = new LinkedList<VideoMessage>(); 
+		m_uploadCapacity = uploadCapacity;
+		m_availableCapacity = uploadCapacity; 
+		System.out.println("Upload capacity is: " + m_uploadCapacity);
 	}
 	
 	public void publishNewStream(StreamEvent pubEvent) {
 		// parse pubEvent
 		m_streams.put(pubEvent.GetEventParams().get(0).intValue(),
 				new StreamData(pubEvent.GetEventParams().get(1).intValue(), 
-						pubEvent.GetEventParams().get(2).intValue()));
+						pubEvent.GetEventParams().get(2).intValue(), CommonState.getTime()));
 		
 	}
 	
-	public void scheduleStream(Node src, int pid, int streamId) {
-		int streamDuration = m_streams.get(streamId).duration;
+	public void startStream(Node src, int pid, int streamId) {
 		VideoPublishEvent pve = new VideoPublishEvent();
 		pve.streamId = streamId;
-		for (int i = 0; i < streamDuration; i++) {
-			EDSimulator.add(i, pve, src, pid);
-		}
+		streamVideo(src, pve, pid);
+		EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
 	}
 
 	
@@ -73,82 +76,71 @@ public class StreamManager {
 		 *   
 		 */
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(src.getID());
-		//System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
-		
+		System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(event.streamId).GetChildren(streamNodeId);
-		
-		// in this implementation using the example above, the second node will not get any packets.
-		VideoMessage streamMsg;
-		
-		int outRate = 5;
-		
-		for (int i = 0; i < outRate; i++) {	
-				for (int dest : children) {
-					streamMsg = new VideoMessage(src);
-					streamMsg.streamId = event.streamId;
-					streamMsg.destStreamNodeId= dest;
-				
-				//if (m_output.size() <= m_queuesize) {
-					m_output.add(streamMsg);
-				//} else {
-				//	System.out.println("dropped a packet");
-				//}
-				}
-				EDSimulator.add(outRate+i, new VideoTransportEvent(), src, pid);			
+		StreamData streamData = m_streams.get(event.streamId);
+		sendData(src, event.streamId, streamData.rate, children, pid);
+		if ((CommonState.getTime() + 1000/streamData.rate) < (streamData.started + streamData.duration)) {
+			EDSimulator.add(1000/streamData.rate, event, src, pid);
 		}
-		
-		
 	}
 
 	public void transportVideoMessages(Node src, int pid) {
 		VideoMessage msg;
-		while ((msg = m_output.poll()) != null) {
+		msg = m_output.get();
+		if (msg != null) {
+			System.out.println("sending message. Messages left " + m_output.size());
 			m_transport.send(src, StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId)), msg, pid);
 		}
+		EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
 	}
 	
 	public void processVideoMessage(Node node, VideoMessage msg, int pid) {
-		// should I forward?
-		
 		m_buffer.add(msg);
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(node.getID());
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(msg.streamId).GetChildren(streamNodeId);
 		
-		if (children.size() == 0) { 
+		// should I forward too?
+		if (children.size() > 0) { 
+			//sendData(node, msg.streamId, msg.streamRate, children, pid);
+			//EDSimulator.add(0, new VideoTransportEvent(), node, pid);
 			consumeVideo(node, msg.streamId);
-		} else {
-			//System.out.println("Stream Node ID " + streamNodeId + " forwarding stream " + msg.streamId );
-			
-			forwardData(streamNodeId, node, msg, children, pid);
+		} else {	
 			consumeVideo(node, msg.streamId);
 		}
 		
 	}
 	
-	private void forwardData(int streamNodeId, Node node, VideoMessage messageToForward, List<Integer> children, int pid) {
+	private void sendData(Node node, int streamId, int streamRate, List<Integer> children, int pid) {
 		VideoMessage streamMsg = null; 
-		int outRate = 5;
-		
-		for (int i = 0; i < outRate; i++) {	
-			for (int dest : children) {
-				streamMsg = new VideoMessage(node);
-				streamMsg.streamId = messageToForward.streamId;
-				streamMsg.destStreamNodeId= dest;
-				
-				//if (m_output.size() <= m_queuesize) {
-				m_output.add(streamMsg);
-				//} else {
-				//	System.out.println("dropped a packet");
-				//}
+		for (int dest : children) {
+			streamMsg = new VideoMessage(node);
+			streamMsg.streamId = streamId;
+			streamMsg.destStreamNodeId= dest;
+			streamMsg.streamRate = streamRate;
+			System.out.println("adding to queue");
+			if (!m_output.add(streamMsg)) {
+				System.out.println("dropped a packet");
 			}
-			EDSimulator.add(outRate+i, new VideoTransportEvent(), node, pid);			
 		}
 	}
 	
 	private void consumeVideo(Node node, int streamId) {
+		int streamNodeId = StreamThing.GetStreamIdFromNodeId(node.getID());
 		for (VideoMessage msg : m_buffer) {
-			//System.out.println(StreamThing.GetStreamIdFromNodeId(node.getID()) + " consuming video msg: " + msg.id);
+			long latency = CommonState.getTime() - msg.sent;
+			if (MessageStatistics.messageCountMap.containsKey(streamNodeId)) {
+				int d = MessageStatistics.messageCountMap.get(streamNodeId);
+				MessageStatistics.messageCountMap.put(streamNodeId, d++);
+				long oldLatency = MessageStatistics.latencyMap.get(streamNodeId);
+				MessageStatistics.latencyMap.put(streamNodeId, oldLatency+latency);
+			} else {
+				MessageStatistics.messageCountMap.put(streamNodeId, 1);
+				MessageStatistics.latencyMap.put(streamNodeId, latency);
+			}
+			// jitter
 		}
+		System.out.println("consuming");
 		m_buffer.clear();
 	}
 }

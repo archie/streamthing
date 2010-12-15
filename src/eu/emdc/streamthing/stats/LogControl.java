@@ -5,13 +5,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import eu.emdc.streamthing.stats.VideoTransport.NodeData;
 
 import peersim.config.Configuration;
 import peersim.core.Control;
 import peersim.core.Network;
-import peersim.core.Node;
 
 public class LogControl implements Control {
 
@@ -40,8 +40,14 @@ public class LogControl implements Control {
 			Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry)it.next();
-				dataOutStream.print(((NodeData)pairs.getValue()).packets + "\t" + ((NodeData)pairs.getValue()).latency + "\t" + pairs.getKey());
+				dataOutStream.print("packets: " + ((NodeData)pairs.getValue()).packets + "\t" + "\t" + pairs.getKey());
 				dataOutStream.println();
+			}
+			
+			Iterator<Entry<Integer, Long>> latencies = MessageStatistics.latencyMap.entrySet().iterator();
+			while (latencies.hasNext()) {
+				Entry<Integer, Long> latencyEntry = latencies.next();
+				dataOutStream.println("latency: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
 			}
 			
 			dataOutStream.close();

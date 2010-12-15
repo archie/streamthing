@@ -86,9 +86,12 @@ public class StreamManager {
 		msg = m_output.get();
 		if (msg != null) {
 			System.out.println("sending message from " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + msg.destStreamNodeId);
-			Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
-			if (dest != null)
-				m_transport.send(src, dest, msg, pid);
+			if (StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
+			{
+				Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
+				if (dest != null)
+					m_transport.send(src, dest, msg, pid);
+			}
 		}
 		if (m_output.size() > 0) {
 			EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);

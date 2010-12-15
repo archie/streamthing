@@ -55,6 +55,11 @@ public class NodeWorld {
 	
 	public void RemoveNodeGraceful (int nodeToBeRemovedStreamId)
 	{
+		if (!m_parentMap.containsKey(nodeToBeRemovedStreamId) && !m_childrenMap.containsKey(nodeToBeRemovedStreamId))
+		{
+			return;
+		}
+			
 		
 //		System.err.println("Error: Not handling node removal case");
 		System.out.println("Removing " + nodeToBeRemovedStreamId + " from " + m_videoStreamId);

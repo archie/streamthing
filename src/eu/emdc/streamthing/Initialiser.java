@@ -68,7 +68,20 @@ public class Initialiser implements Control {
 				EDSimulator.add(0, event, node, streamThingPid);
 				break;
 			case FAIL:
-				getNodeFromStreamNodeId(event.GetNodeId()).setFailState(Fallible.DOWN);
+				System.err.println("OMGIMMAFAIL: " + event.GetNodeId() + " --- " + StreamThing.m_streamIdToNodeId.get (event.GetNodeId()));
+				
+				// Clean up the node's data structures:
+				Node n = getNodeFromStreamNodeId(event.GetNodeId());
+				if(n == null)
+				{
+					break;
+				}
+				StreamThing s = (StreamThing) n.getProtocol(Configuration.lookupPid("streamthing"));
+				
+				s.cleanup();
+				StreamThing.m_streamIdToNodeId.remove(event.GetNodeId());
+				n.setFailState(Fallible.DOWN);
+
 				break;
 			default: /* all other events we can just go ahead and schedule */
 				

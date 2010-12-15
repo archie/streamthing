@@ -61,6 +61,12 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		return null;
 	}
 	
+	public void cleanup (){
+		m_streamsISubscribeTo.clear ();
+		m_latestPing.clear ();
+		m_streamsIPublish.clear ();
+	}
+	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
 		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
@@ -215,7 +221,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				Entry<Integer, Integer> entry = iter.next();
 				m_videoStreamIdToMulticastTreeMap.get (entry.getKey()).RemoveNodeGraceful(m_myStreamNodeId);
 			}
-			//m_streamIdToNodeId.remove(m_myStreamNodeId);
+			m_streamIdToNodeId.remove(m_myStreamNodeId);
 			m_streamsISubscribeTo.clear ();
 			
 			//System.out.println("I actually enter this place");
@@ -281,7 +287,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				}
 			}
 			
-			//m_latestPing.clear();
+			m_latestPing.clear();
 			
 			// send ping msgs
 			
@@ -302,8 +308,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					}
 					
 					m_latestPing.put(stream, blah);
+					
 					for (int childId : m_videoStreamIdToMulticastTreeMap.get(stream).GetChildren(m_myStreamNodeId)) {
 						Node child = GetNodeFromStreamId(childId);
+						if (child != null)
 						{
 							StreamMessage ping = new StreamMessage(MessageType.PING, GetStreamIdFromNodeId(src.getID()));
 							ping.streamId = stream;
@@ -329,13 +337,32 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 						blah.add (k);
 					}
 					
+					blah.add (m_videoStreamIdToMulticastTreeMap.get(stream.getKey()).GetParent(m_myStreamNodeId));
 					m_latestPing.put(stream.getKey(), blah);
+					
+					// First ping parent
+					
+					Node pa = GetNodeFromStreamId (m_videoStreamIdToMulticastTreeMap.get(stream.getKey()).GetParent(m_myStreamNodeId));
+					
+					if (pa != null)
+					{
+					//System.out.println("Children: " + vect.get(i));
+					StreamMessage ping = new StreamMessage(MessageType.PING, GetStreamIdFromNodeId(src.getID()));
+					ping.streamId = stream.getKey();
+					transport.send(src, pa, ping, pid);
+					}
+					
 					for (int i = 0; i < vect.size (); i++)
 					{
+						Node n = GetNodeFromStreamId (vect.get(i));
+						
+						if (n != null)
+						{
 						//System.out.println("Children: " + vect.get(i));
 						StreamMessage ping = new StreamMessage(MessageType.PING, GetStreamIdFromNodeId(src.getID()));
 						ping.streamId = stream.getKey();
 						transport.send(src, GetNodeFromStreamId(vect.get(i)), ping, pid);
+						}
 					}
 				}
 			}
@@ -348,7 +375,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	}
 	
 	public static Node GetNodeFromStreamId(int streamId) {
-		return GetNodeFromNodeId(m_streamIdToNodeId.get(streamId));
+		if (m_streamIdToNodeId.containsKey(streamId))
+			return GetNodeFromNodeId(m_streamIdToNodeId.get(streamId));
+		else
+			return null;
 	}
 	
 }

@@ -41,7 +41,7 @@ public class StreamManager {
 		m_output = new VideoBuffer<VideoMessage>(m_queuesize);
 		m_buffer = new LinkedList<VideoMessage>(); 
 		m_uploadCapacity = uploadCapacity;
-		System.out.println("Upload capacity is: " + m_uploadCapacity);
+		//System.out.println("Upload capacity is: " + m_uploadCapacity);
 	}
 	
 	public void publishNewStream(StreamEvent pubEvent) {
@@ -74,7 +74,7 @@ public class StreamManager {
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(src.getID());
 		if (streamNodeId == -1) // Lag from failure
 			return;
-		System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
+		//System.out.println("Stream Node ID " + streamNodeId + " streaming video with stream " + event.streamId );
 		List<Integer> children = StreamThing.m_videoStreamIdToMulticastTreeMap.get(event.streamId).GetChildren(streamNodeId);
 		StreamData streamData = m_streams.get(event.streamId);
 		if (children != null)

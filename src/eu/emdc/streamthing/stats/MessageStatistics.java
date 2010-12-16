@@ -12,12 +12,13 @@ public class MessageStatistics {
 	public static Map<Integer, Integer> messageCountMap = new HashMap<Integer, Integer>();
 	public static Map<Integer, Long> latencyMap = new HashMap<Integer, Long>();
 	public static Map<Integer, Integer> droppedMap = new HashMap<Integer, Integer>();
+	public static Map<Integer, Integer> unknownMap = new HashMap<Integer, Integer>();
 	
 	public static void latency(int streamNodeId, long time) {
 		if (messageCountMap.containsKey(streamNodeId)) 
 		{
 			int d = messageCountMap.get(streamNodeId);
-			messageCountMap.put(streamNodeId, d++);
+			messageCountMap.put(streamNodeId, d+1);
 			long oldLatency = latencyMap.get(streamNodeId);
 			latencyMap.put(streamNodeId, oldLatency+time);
 		} 
@@ -32,7 +33,7 @@ public class MessageStatistics {
 		if (droppedMap.containsKey(streamNodeId)) 
 		{
 			int d = droppedMap.get(streamNodeId);
-			droppedMap.put(streamNodeId, d++);
+			droppedMap.put(streamNodeId, d+1);
 		}
 		else
 		{
@@ -40,5 +41,16 @@ public class MessageStatistics {
 		}
 	}
 
+	public static void unknown(int streamNodeId) {
+		if (unknownMap.containsKey(streamNodeId)) 
+		{
+			int d = unknownMap.get(streamNodeId);
+			unknownMap.put(streamNodeId, d+1);
+		}
+		else
+		{
+			unknownMap.put(streamNodeId, 1);
+		}
+	}
 	
 }

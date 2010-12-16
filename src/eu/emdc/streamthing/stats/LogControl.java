@@ -56,6 +56,11 @@ public class LogControl implements Control {
 				dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
 			}
 			
+			Iterator<Entry<Integer, Integer>> unknown = MessageStatistics.unknownMap.entrySet().iterator();
+			while (unknown.hasNext()) {
+				Entry<Integer, Integer> unknownEntry = unknown.next();
+				dataOutStream.println("unknown: " + unknownEntry.getKey() + "\t" + unknownEntry.getValue());
+			}
 			
 			dataOutStream.close();
 		} catch (IOException ex) {

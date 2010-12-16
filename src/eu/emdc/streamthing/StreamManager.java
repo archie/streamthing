@@ -11,9 +11,11 @@ import peersim.core.Node;
 import peersim.edsim.EDSimulator;
 import peersim.transport.Transport;
 
+import eu.emdc.streamthing.message.TransportWithDelayEvent;
 import eu.emdc.streamthing.message.VideoPublishEvent;
 import eu.emdc.streamthing.message.VideoMessage;
 import eu.emdc.streamthing.stats.MessageStatistics;
+import eu.emdc.streamthing.transport.PacketLoss;
 
 public class StreamManager {
 	private Queue<VideoMessage> m_buffer; // needs to be made global
@@ -94,8 +96,12 @@ public class StreamManager {
 			if (StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
 			{
 				Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
-				if (dest != null)
-					m_transport.send(src, dest, msg, pid);
+				if (dest != null) {
+					TransportWithDelayEvent e = new TransportWithDelayEvent();
+					e.src = src; e.dest = dest; e.msg = msg; e.pid = pid;
+					EDSimulator.add(PacketLoss.latency(src, dest), e, src, pid);
+					//m_transport.send(src, dest, msg, pid);
+				}
 			}
 		}
 		if (m_output.size() > 0) {

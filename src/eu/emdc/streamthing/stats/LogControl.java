@@ -47,7 +47,7 @@ public class LogControl implements Control {
 			Iterator<Entry<Integer, Long>> latencies = MessageStatistics.latencyMap.entrySet().iterator();
 			while (latencies.hasNext()) {
 				Entry<Integer, Long> latencyEntry = latencies.next();
-				dataOutStream.println("latency: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
+				dataOutStream.println("latency: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue()/MessageStatistics.messageCountMap.get(latencyEntry.getKey()));
 			}
 			
 			Iterator<Entry<Integer, Integer>> drops = MessageStatistics.droppedMap.entrySet().iterator();

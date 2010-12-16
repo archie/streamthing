@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import eu.emdc.streamthing.message.*;
 import eu.emdc.streamthing.stats.Debug;
+import eu.emdc.streamthing.stats.MessageStatistics;
 
 import peersim.cdsim.CDProtocol;
 import peersim.config.Configuration;
@@ -83,36 +84,35 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 	@Override
 	public void processEvent(Node node, int pid, Object event) {
-		
-			if (event instanceof StreamEvent) {
-				handleTrigger(node, (StreamEvent) event, pid);
+		if (event instanceof TransportWithDelayEvent) {
+			Transport transport = (Transport) node.getProtocol(FastConfig
+					.getTransport(pid));
+			TransportWithDelayEvent e = (TransportWithDelayEvent) event;
+			transport.send(e.src, e.dest, e.msg, e.pid);
+		} else if (event instanceof StreamEvent) {
+			handleTrigger(node, (StreamEvent) event, pid);
+			return;
+		} else if (event instanceof VideoMessage) {
+			VideoMessage eventMsg = (VideoMessage) event;
+
+			if (m_streamsISubscribeTo.size() == 0) {
+				// System.err.println("WTF Man brrr...");
+				MessageStatistics.dropped(m_myStreamNodeId);
 				return;
 			}
-			else if (event instanceof VideoMessage) {
-				VideoMessage eventMsg = (VideoMessage) event;
-				
-				if (m_streamsISubscribeTo.size() == 0)
-				{
-					System.err.println("WTF Man brrr...");
-					return;
-				}
-				
-				if (m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
-					m_streamManager.processVideoMessage(node, eventMsg, pid);
-			}
-			else if (event instanceof VideoPublishEvent) {
-				m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
-			}
-			else if (event instanceof VideoTransportEvent) {
-				m_streamManager.transportVideoMessages(node, pid);
-			}
-			else if (event instanceof StreamMessage) {
-				handleMessage(node, (StreamMessage) event, pid);
-				return;
-			}
-			else {
-				System.err.println("Unknown message!");
-			}
+
+			if (m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
+				m_streamManager.processVideoMessage(node, eventMsg, pid);
+		} else if (event instanceof VideoPublishEvent) {
+			m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
+		} else if (event instanceof VideoTransportEvent) {
+			m_streamManager.transportVideoMessages(node, pid);
+		} else if (event instanceof StreamMessage) {
+			handleMessage(node, (StreamMessage) event, pid);
+			return;
+		} else {
+			System.err.println("Unknown message!");
+		}
 	}
 
 	@Override
@@ -140,9 +140,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		
 		switch (msg.type) {
 		case SUBSCRIBE:
-			System.out.println("got subscribe from " + msg.source + " sending ack with rate");
+			//System.out.println("got subscribe from " + msg.source + " sending ack with rate");
 			StreamMessage replyAck = new StreamMessage(MessageType.SUBSCRIBE_ACK, GetStreamIdFromNodeId(src.getID()));
-			replyAck.streamRate = 500;
+			replyAck.streamRate = 500; // no use for this... 
 			replyAck.streamId = msg.streamId;
 			Node dest = GetNodeFromStreamId(msg.source);
 			transport.send(src, dest, replyAck, pid);
@@ -162,7 +162,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				m_streamManager = new StreamManager(transport, fu.intValue());
 			}
 			
-			System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.streamId + " with rate " + msg.streamRate);
+			//System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.streamId + " with rate " + msg.streamRate);
 			m_streamsISubscribeTo.put(msg.streamId, msg.streamRate);
 			
 			break;
@@ -289,7 +289,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				
 				for (int i = 0; i < vect.size(); i++)
 				{
-					System.out.println(m_myStreamNodeId + " Me no receive pong from " + vect.get(i) + " :(");
+					//System.out.println(m_myStreamNodeId + " Me no receive pong from " + vect.get(i) + " :(");
 					m_videoStreamIdToMulticastTreeMap.get (entry.getKey()).RemoveNodeGraceful(vect.get(i));
 				}
 			}

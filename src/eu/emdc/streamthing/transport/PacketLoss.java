@@ -15,7 +15,7 @@ public class PacketLoss implements Transport {
 	private static final String NODE_LATENCY = ".latencyfile";
 	
 	private final int transport;
-	private NodeConfig m_nodeConfig; 
+	public static NodeConfig m_nodeConfig; 
 	
 	public PacketLoss(String prefix) {
 		transport = Configuration.getPid(prefix+"."+PAR_TRANSPORT);
@@ -25,6 +25,16 @@ public class PacketLoss implements Transport {
 		
 	}
 	
+	public static long latency(Node src, Node dest) {
+		DelayTuple dt = null;
+		System.out.println("size of " + NodeConfig.latencyMap.size());
+		if ((dt = m_nodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
+				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
+			System.out.println("Delay: " + dt.GetMinDelay() + " - " + dt.GetMaxDelay());
+			return CommonState.r.nextLong() - (long)dt.GetMinDelay();
+		}
+		return 1;
+	}
 	
 	public long getLatency(Node src, Node dest) {
 		System.out.println("Delay between " + src.getID() + " and " + dest.getID());

@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import eu.emdc.streamthing.message.*;
 import eu.emdc.streamthing.stats.MessageStatistics;
+import eu.emdc.streamthing.transport.TransportControl;
 
 import peersim.cdsim.CDProtocol;
 import peersim.config.Configuration;
@@ -26,6 +27,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	/* implementation */
 	protected String prefix;
 	protected StreamManager m_streamManager;
+	protected TurbulenceManager m_turbulenceManager;
+	protected TransportControl m_transportControl;
 	public boolean hasJoined = false;
 	public int m_myStreamNodeId;
 	protected Map<Integer, Integer> m_streamsISubscribeTo;
@@ -38,7 +41,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	static public Map<Integer, Integer> m_videoStreamToStreamNodeId = new HashMap<Integer, Integer>();
 	
 	static public Map<Integer, NodeWorld> m_videoStreamIdToMulticastTreeMap = new HashMap<Integer, NodeWorld>();
-
 	
 	static public int GetStreamIdFromNodeId(long nodeId) {
 		Iterator<Entry<Integer, Long>> iter = m_streamIdToNodeId.entrySet().iterator();
@@ -57,6 +59,13 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				return Network.get(i);
 		}
 		return null;
+	}
+	
+	public StreamThing(String prefix) {
+		this.prefix = prefix;
+		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
+		m_streamsISubscribeTo = new HashMap<Integer, Integer>();
+		m_latestPing = new HashMap<Integer, List<Integer> >();
 	}
 	
 	public int TotalAmountOfUpload (){
@@ -87,15 +96,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		m_latestPing.clear ();
 		m_streamsIPublish.clear ();
 	}
-	
-	public StreamThing(String prefix) {
-		this.prefix = prefix;
-		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
-		m_streamsISubscribeTo = new HashMap<Integer, Integer>();
-		m_latestPing = new HashMap<Integer, List<Integer> >();
-		// StreamThing helpers
-		
-	}
 
 	@Override
 	public void nextCycle(Node node, int protocolID) {
@@ -121,12 +121,12 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				return;
 			}
 
-			if (m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
+			if (eventMsg.streamId >= 0 && m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
 				m_streamManager.processVideoMessage(node, eventMsg, pid);
 		} else if (event instanceof VideoPublishEvent) {
 			m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
 		} else if (event instanceof VideoTransportEvent) {
-			m_streamManager.transportVideoMessages(node, pid);
+			m_transportControl.transportMessages(node, pid);
 		} else if (event instanceof StreamMessage) {
 			handleMessage(node, (StreamMessage) event, pid);
 			return;
@@ -141,6 +141,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		try {
 			s = (StreamThing) super.clone();
 			s.m_streamManager = null;
+			s.m_turbulenceManager = null;
+			s.m_transportControl = null;
 			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
 			s.m_streamsISubscribeTo = new HashMap<Integer, Integer>();
@@ -179,7 +181,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 				if (fu == null) {
 					fu= new Float(5000);
 				}
-				m_streamManager = new StreamManager(transport, fu.intValue());
+				m_streamManager = new StreamManager(m_transportControl, fu.intValue());
 				MessageStatistics.bandwidth(m_myStreamNodeId, TotalAmountOfUpload());
 			}
 			
@@ -234,6 +236,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_myStreamNodeId = msg.GetNodeId();
 			StreamThing.m_streamIdToNodeId.put (m_myStreamNodeId,  src.getID());
 			
+			m_transportControl = new TransportControl(m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
 			
 			break;
 		case LEAVE:
@@ -270,7 +273,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			
 			// start streaming
 			if (m_streamManager == null) {
-				m_streamManager = new StreamManager(transport, f.intValue());
+				m_streamManager = new StreamManager(m_transportControl, f.intValue());
 			}
 			m_streamManager.publishNewStream(msg);
 			m_streamManager.startStream(src, pid, msg.GetEventParams().get(0).intValue());
@@ -300,6 +303,18 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			//m_streamIdToNodeId.remove(m_myStreamNodeId);
 			m_streamsISubscribeTo.remove((Object) msg.GetEventParams().get(0).intValue());
 			// Notify StreamManager
+			break;
+		case TURBULENCE:
+			System.out.println("I can haz the shaiiiaiiit! ");
+			if (m_turbulenceManager == null) {
+				m_turbulenceManager = new TurbulenceManager(m_transportControl, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
+			}
+			
+			m_turbulenceManager.startTurbulence(src, msg.GetEventParams().get(0).intValue(), 
+					msg.GetEventParams().get(1).intValue(), 
+					msg.GetEventParams().get(2).intValue(),
+					msg.GetEventParams().get(3).intValue(), pid);
+			
 			break;
 		case TIMEOUT:
 			

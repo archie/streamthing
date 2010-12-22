@@ -16,14 +16,15 @@ import eu.emdc.streamthing.message.VideoPublishEvent;
 import eu.emdc.streamthing.message.VideoMessage;
 import eu.emdc.streamthing.stats.MessageStatistics;
 import eu.emdc.streamthing.transport.PacketLoss;
+import eu.emdc.streamthing.transport.TransportControl;
 
 public class StreamManager {
 	private Queue<VideoMessage> m_buffer; // needs to be made global
 	
 	private Map<Integer, StreamData> m_streams = new HashMap<Integer, StreamData>();
-	private Transport m_transport;
-	private VideoBuffer<VideoMessage> m_output;
-	private int m_queuesize;
+	private TransportControl m_transport;
+	//private VideoBuffer<VideoMessage> m_output;
+	//private int m_queuesize;
 	private int m_uploadCapacity;
 	
 	class StreamData {
@@ -37,10 +38,10 @@ public class StreamManager {
 		}
 	}
 	
-	public StreamManager(Transport transport, int uploadCapacity) {
+	public StreamManager(TransportControl transport, int uploadCapacity) {
 		m_transport = transport;
-		m_queuesize = 5;
-		m_output = new VideoBuffer<VideoMessage>(m_queuesize);
+		//m_queuesize = 5;
+		//m_output = new VideoBuffer<VideoMessage>(m_queuesize);
 		m_buffer = new LinkedList<VideoMessage>(); 
 		m_uploadCapacity = uploadCapacity;
 		//System.out.println("Upload capacity is: " + m_uploadCapacity);
@@ -62,17 +63,6 @@ public class StreamManager {
 	
 	public void streamVideo(Node src, VideoPublishEvent event, int pid) {
 		
-		/*
-		 *  rate control 
-		 *   if stream rate is 1000
-		 *   and two nodes are subscribing
-		 *   and your upload capacity is 1000
-		 *   
-		 *   How to divide the up capacity equal?
-		 *    - round robin? (equal drop for all nodes)
-		 *    - all to one, push subscribing node (causing overload) down? 
-		 *   
-		 */
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(src.getID());
 		if (streamNodeId == -1) // Lag from failure
 			return;
@@ -88,26 +78,6 @@ public class StreamManager {
 		}
 	}
 
-	public void transportVideoMessages(Node src, int pid) {
-		VideoMessage msg;
-		msg = m_output.get();
-		if (msg != null) {
-			//System.out.println("sending message from " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + msg.destStreamNodeId);
-			if (StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
-			{
-				Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
-				if (dest != null) {
-					TransportWithDelayEvent e = new TransportWithDelayEvent();
-					e.src = src; e.dest = dest; e.msg = msg; e.pid = pid;
-					EDSimulator.add(PacketLoss.latency(src, dest), e, src, pid);
-					//m_transport.send(src, dest, msg, pid);
-				}
-			}
-		}
-		if (m_output.size() > 0) {
-			EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), src, pid);
-		}
-	}
 	
 	public void processVideoMessage(Node node, VideoMessage msg, int pid) {
 		m_buffer.add(msg);
@@ -134,13 +104,9 @@ public class StreamManager {
 			streamMsg.destStreamNodeId= dest;
 			streamMsg.streamRate = streamRate;
 			
-			if (!m_output.add(streamMsg)) 
-			{
-				MessageStatistics.droppedNode(StreamThing.GetStreamIdFromNodeId(node.getID()));
-				MessageStatistics.droppedStream(streamId);
-			}
+			m_transport.addToQueue(node, streamMsg);
 			
-			if (m_output.size() == 1) 
+			if (m_transport.getQueueSize() == 1) 
 			{
 				EDSimulator.add(1000/m_uploadCapacity, new VideoTransportEvent(), node, pid);
 			}
@@ -154,7 +120,7 @@ public class StreamManager {
 			long latency = CommonState.getTime() - msg.sent;
 			MessageStatistics.latencyNode(streamNodeId, latency);
 			MessageStatistics.latencyStream(streamId, latency);
-			// jitter
+			
 		}
 		m_buffer.clear();
 	}

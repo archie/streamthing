@@ -47,7 +47,7 @@ public class LogControl implements Control {
 			printLatency(dataOutStream);
 
 			// jitter
-			printJitter(dataOutStream);
+			//printJitter(dataOutStream);
 			
 			// bandwidth
 			printBandwidth(dataOutStream);

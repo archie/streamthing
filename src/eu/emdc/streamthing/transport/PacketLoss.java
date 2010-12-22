@@ -40,7 +40,7 @@ public class PacketLoss implements Transport {
 	}
 	
 	public long getLatency(Node src, Node dest) {
-		return 0;
+		return 0; // couldn't get this running - scheduling with delay instead
 	}
 
 	@Override

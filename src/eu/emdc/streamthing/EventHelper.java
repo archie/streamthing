@@ -67,20 +67,17 @@ public class EventHelper {
 					vect.add (scanner.nextFloat()); // Stream ID
 				}
 				else if (et.equals("T")){
-					float x;
-					x = scanner.nextFloat();
-					x = scanner.nextFloat();
-					x = scanner.nextFloat();
-					x = scanner.nextFloat();
+					newEvent.SetEventType (StreamEventType.TURBULENCE);
+					vect.add (scanner.nextFloat ());
+					vect.add (scanner.nextFloat ());
+					vect.add (scanner.nextFloat ());
+					vect.add (scanner.nextFloat ());
 				}
 				
-				if (!et.equals("T"))
-				{
-					newEvent.SetEventParams(vect);
+				newEvent.SetEventParams(vect);
 				
-					m_eventQueue.add (newEvent);
-					N--;
-				}
+				m_eventQueue.add (newEvent);
+				N--;
 			}
 		}
 		catch (Exception e)

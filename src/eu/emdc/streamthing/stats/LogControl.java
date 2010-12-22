@@ -3,6 +3,7 @@ package eu.emdc.streamthing.stats;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +46,12 @@ public class LogControl implements Control {
 			// latency
 			printLatency(dataOutStream);
 
+			// jitter
+			printJitter(dataOutStream);
+			
 			// bandwidth
 			printBandwidth(dataOutStream);
+			
 			
 			dataOutStream.close();
 		} catch (IOException ex) {
@@ -109,6 +114,44 @@ public class LogControl implements Control {
 			if (average > 0)
 				dataOutStream.println("avg-node: " + avg.getKey() + "\t" + average);
 		}
+	}
+	
+	private void printJitter(PrintWriter dataOutStream) {
+		int network_node_mean = 0;
+		int network_stream_mean = 0;
+		Iterator<Entry<Integer, Long>> latencies;
+		//List<Double> jitter = new ArrayList<Double>();
+		
+		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
+		while (latencies.hasNext()) {
+			Entry<Integer, Long> latencyEntry = latencies.next();
+			network_node_mean += latencyEntry.getValue();
+		}
+		
+		network_node_mean = network_node_mean/MessageStatistics.latencyNodeMap.size();
+		
+		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
+		while (latencies.hasNext()) {
+			Entry<Integer, Long> latencyEntry = latencies.next();
+			dataOutStream.println("jitter-node: " + latencyEntry.getKey() + "\t" + Math.abs(latencyEntry.getValue()-network_node_mean));
+		}
+		
+		// -----
+		
+		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
+		while (latencies.hasNext()) {
+			Entry<Integer, Long> latencyEntry = latencies.next();
+			network_stream_mean += latencyEntry.getValue();
+		}
+		
+		network_stream_mean = network_stream_mean/MessageStatistics.latencyStreamMap.size();
+		
+		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
+		while (latencies.hasNext()) {
+			Entry<Integer, Long> latencyEntry = latencies.next();
+			dataOutStream.println("jitter-stream: " + latencyEntry.getKey() + "\t" + Math.abs(latencyEntry.getValue()-network_stream_mean));
+		}
+		
 	}
 
 }

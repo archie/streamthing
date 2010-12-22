@@ -34,6 +34,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public int m_myStreamNodeId;
 	protected Map<Integer, Integer> m_streamsISubscribeTo;
 	protected List<Integer> m_streamsIPublish;
+	protected int m_uploadBandwidthOfStreamsIPublish = 0;
 	protected Map<Integer, List<Integer> > m_latestPing; 
 	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
@@ -69,6 +70,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			Entry<Integer, Integer> entry = iter.next();
 			sum += entry.getValue();
 		}
+		
+		sum += m_uploadBandwidthOfStreamsIPublish;
 		
 		return sum;
 	}
@@ -252,9 +255,10 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			if (f == null) {
 				f = new Float(5000);
 			}
-			NodeWorld nw = new NodeWorld (msg.GetEventParams().get (0).intValue(), m_myStreamNodeId, f.intValue());
+			NodeWorld nw = new NodeWorld (msg.GetEventParams().get (0).intValue(), m_myStreamNodeId, f.intValue(), msg.GetEventParams().get (2).intValue());
 			m_videoStreamIdToMulticastTreeMap.put (msg.GetEventParams().get (0).intValue(), nw);
 			
+			m_uploadBandwidthOfStreamsIPublish += msg.GetEventParams().get(2).intValue();
 			// I am now the root of a multicast tree;
 			
 			// start streaming

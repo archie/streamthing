@@ -2,8 +2,16 @@ package eu.emdc.streamthing;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Map.Entry;
+
+import peersim.config.Configuration;
+import peersim.core.CommonState;
+import peersim.core.Network;
+import peersim.core.Node;
 
 /**
  * Maintains the multicast tree(s)
@@ -15,23 +23,21 @@ public class NodeWorld {
 
 	private Map<Integer, Integer> m_parentMap = new HashMap<Integer, Integer> ();
 	private Map<Integer, List<Integer> > m_childrenMap = new HashMap<Integer, List<Integer> > ();
-	private List<Integer> m_listOfBuckets = new ArrayList<Integer>();
+	//private List<Integer> m_listOfBuckets = new ArrayList<Integer>();
 	private Integer m_videoStreamId;
 	private Integer m_sourceNodeStreamId;
+	private int m_uploadRateOfStream;
 	
-	public NodeWorld (int videoStreamId, int sourceNodeStreamId, float capacity)
+	public NodeWorld (int videoStreamId, int sourceNodeStreamId, float capacity, int uploadRateOfStream)
 	{
 		m_videoStreamId = videoStreamId;
 		m_sourceNodeStreamId = sourceNodeStreamId;
 		List<Integer> temp = new ArrayList<Integer> ();
 		m_childrenMap.put(m_sourceNodeStreamId, temp);
 		m_parentMap.put (m_sourceNodeStreamId, -1);
+		m_uploadRateOfStream = uploadRateOfStream;
 		
 		System.out.println(sourceNodeStreamId + " has capacity " + capacity);
-		for (int i = 0; i < MAX_CHILDREN; i++)
-		{
-			m_listOfBuckets.add (sourceNodeStreamId);
-		}
 		System.out.println("Creating NW with root: " + sourceNodeStreamId + " " + videoStreamId);
 	}
 	
@@ -39,18 +45,67 @@ public class NodeWorld {
 	{
 		// Iterate through MTree to find location
 		// For now, we do round robin, later, we might want to do a random join
-		int bucket = m_listOfBuckets.get(0);
+		
+		//System.err.println("In " + m_videoStreamId);
+		int streamIndex = -1;
+		for (;;)
+		{
+			int x = CommonState.r.nextInt(m_parentMap.size ());
+			//System.err.println(newNodeStreamId + " is going to join with loc " + x);
+			Iterator<Entry<Integer, Integer>> iter = m_parentMap.entrySet().iterator();
+			while (x != 0)
+			{
+				//System.err.println("Iterating " + x);
+				if (iter.hasNext ())
+				{
+					Entry<Integer, Integer> entry = iter.next();
+					x--;
+				}
+			}
+			
+			Entry<Integer, Integer> entry = iter.next();
+			
+			streamIndex = entry.getKey();
+			
+			//System.err.println("Found " + streamIndex);
+			Node potentialParent = StreamThing.GetNodeFromStreamId(streamIndex);
+			
+			if (potentialParent == null)
+			{
+				// Node has failed/left, find another one
+				continue;
+			}
+			
+			StreamThing st = (StreamThing) potentialParent.getProtocol(Configuration.lookupPid("streamthing"));
+			
+			if (st == null){
+				// Not sure if this should happen, but playing safe
+				System.err.println("Fatal error. Random ST instance is null?");
+			}
+				
+			 // Double check for the parent map
+			if (m_parentMap.containsKey(streamIndex) && (st.TotalAmountOfUpload() + m_uploadRateOfStream < st.m_nodeConfig.GetUploadCapacityForNode(streamIndex)))
+			{
+				//System.out.println("correcto: found node:" + streamIndex + " streamId:" + m_videoStreamId + " can haz:" + st.TotalAmountOfUpload());
+				break;
+			}
+			else
+			{
+				continue;
+			}
+		}
+		
+		if (streamIndex == -1)
+		{
+			System.err.println("Error, no stream node found to join?");
+		}
+		int bucket = streamIndex;
 		m_parentMap.put(newNodeStreamId, bucket);
 		List<Integer> tempvect =  m_childrenMap.get (bucket);
 		tempvect.add(newNodeStreamId);
 		m_childrenMap.put (bucket, tempvect);
-		m_listOfBuckets.remove(0);
 	
 		m_childrenMap.put (newNodeStreamId, new ArrayList<Integer> ());
-		for (int i = 0; i < MAX_CHILDREN; i++)
-		{
-			m_listOfBuckets.add (newNodeStreamId);
-		}
 	}
 	
 	public void RemoveNodeGraceful (int nodeToBeRemovedStreamId)
@@ -74,12 +129,12 @@ public class NodeWorld {
 			return;
 		}
 		
-//		System.err.println("Error: Not handling node removal case");
-		System.out.println("Removing " + nodeToBeRemovedStreamId + " from " + m_videoStreamId);
+		//System.err.println("Error: Not handling node removal case");
+		//System.out.println("Removing " + nodeToBeRemovedStreamId + " from " + m_videoStreamId);
 		// First correct the parent
 		int parent = m_parentMap.get (nodeToBeRemovedStreamId); // Get parent
 		
-		System.out.println("Parent of " + nodeToBeRemovedStreamId + " is " + parent);
+		//System.out.println("Parent of " + nodeToBeRemovedStreamId + " is " + parent);
 		List<Integer> tempvect = m_childrenMap.get (parent);						// Get parent's children
 		
 		for (int i =0; i < tempvect.size (); i++)
@@ -110,23 +165,6 @@ public class NodeWorld {
 		
 		// Parent of node which is leaving wil have an empty bucket now
 		
-		m_listOfBuckets.add (parent);
-		
-		// Remove all bucket entries of node which is leaving
-		// (This is ugly. I hate Java -- Lalith)
-		
-		for (int i =0; i < MAX_CHILDREN - numOfKids; i++)
-		{
-			for (int j = 0; j < m_listOfBuckets.size(); j++)
-			{
-				if (m_listOfBuckets.get(j) == nodeToBeRemovedStreamId)
-				{
-					m_listOfBuckets.remove (j);				// Remove all buckets
-					break;
-				}
-			}
-		}
-		
 		// Now find the orphaned children some new parents
 		for (int i = 0 ; i < childvect.size (); i++)
 		{
@@ -134,22 +172,62 @@ public class NodeWorld {
 			int newNodeStreamId = childvect.get (i);
 			int k = 0;
 			
-			while (true)
+			int streamIndex = -1;
+			for (;;)
 			{
-				if (m_listOfBuckets.get(k) != newNodeStreamId)
+				int x = CommonState.r.nextInt(m_parentMap.size ());
+				//System.err.println(newNodeStreamId + " is going to join with loc " + x);
+				Iterator<Entry<Integer, Integer>> iter = m_parentMap.entrySet().iterator();
+				while (x != 0)
+				{
+					//System.err.println("Iterating " + x);
+					if (iter.hasNext ())
+					{
+						Entry<Integer, Integer> entry = iter.next();
+						x--;
+					}
+				}
+				
+				Entry<Integer, Integer> entry = iter.next();
+				
+				streamIndex = entry.getKey();
+				
+				//System.err.println("Found " + streamIndex);
+				Node potentialParent = StreamThing.GetNodeFromStreamId(streamIndex);
+				
+				if (potentialParent == null)
+				{
+					// Node has failed/left, find another one
+					continue;
+				}
+				
+				StreamThing st = (StreamThing) potentialParent.getProtocol(Configuration.lookupPid("streamthing"));
+				
+				if (st == null){
+					// Not sure if this should happen, but playing safe
+					System.err.println("Fatal error. Random ST instance is null?");
+				}
+					
+				 // Double check for the parent map
+				if (m_parentMap.containsKey(streamIndex) && (st.TotalAmountOfUpload() + m_uploadRateOfStream < st.m_nodeConfig.GetUploadCapacityForNode(streamIndex)))
+				{
+					//System.out.println("correcto: found node:" + streamIndex + " streamId:" + m_videoStreamId + " can haz:" + st.TotalAmountOfUpload());
 					break;
-				k++;
+				}
+				else
+				{
+					continue;
+				}
 			}
 			
-			int bucket = m_listOfBuckets.get(k);
+			int bucket = streamIndex;
 			
 			m_parentMap.put(newNodeStreamId, bucket);
 			List<Integer> tempvect1 =  m_childrenMap.get (bucket);
 			tempvect1.add(newNodeStreamId);
 			m_childrenMap.put (bucket, tempvect1);
-			m_listOfBuckets.remove(0);
 			
-			System.out.println("AbandondedStreamNode " + newNodeStreamId + " has a new parent " + bucket);
+			//System.out.println("AbandondedStreamNode " + newNodeStreamId + " has a new parent " + bucket);
 		}
 		
 		m_childrenMap.remove (nodeToBeRemovedStreamId);

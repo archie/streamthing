@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <project name="streamthing" default="run" basedir=".">
   <property name="classes.dir" value="build/classes" />
-  <property name="lib.dir" value="/Users/lalith/Downloads/peersim-1.0.5/" />
+  <property name="lib.dir" value="../p2p/" />
   <property name="main-class" value="peersim.Simulator" />
   
   <path id="classpath">
@@ -30,13 +30,21 @@
       </classpath>
       <arg line="pastry.config" />
     </java>
+  </target>
+
+  <target name="graphs">
     <mkdir dir="graphs" />
-    <!--    <exec executable="/bin/sh">
-      <arg line='-c "sort -r logfile.data &gt; packets.data"' />
-    </exec>-->
-<!--    <exec executable="/bin/sh">
+    <exec executable="/bin/sh" outputproperty="dropped.data">
+      <arg value="-c" />
+      <arg value="cat logfile.data | grep dropped | awk '{ print $3, $2 }' | sort -rg &gt; dropped.data" />
+    </exec>
+    <exec executable="/bin/sh" outputproperty="packets.data">
+      <arg value="-c" />
+      <arg value="cat logfile.data | grep packets | awk '{ print $3, $2 }' | sort -rg &gt; packets.data" />
+    </exec>
+    <exec executable="/bin/sh">
       <arg line='-c "gnuplot graphs.plot"' />
-    </exec>-->
+    </exec>
   </target>
 
   <target name="clean">

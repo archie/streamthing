@@ -136,7 +136,8 @@ public class StreamManager {
 			
 			if (!m_output.add(streamMsg)) 
 			{
-				MessageStatistics.dropped(StreamThing.GetStreamIdFromNodeId(node.getID()));
+				MessageStatistics.droppedNode(StreamThing.GetStreamIdFromNodeId(node.getID()));
+				MessageStatistics.droppedStream(streamId);
 			}
 			
 			if (m_output.size() == 1) 
@@ -151,7 +152,8 @@ public class StreamManager {
 		int streamNodeId = StreamThing.GetStreamIdFromNodeId(node.getID());
 		for (VideoMessage msg : m_buffer) {
 			long latency = CommonState.getTime() - msg.sent;
-			MessageStatistics.latency(streamNodeId, latency);
+			MessageStatistics.latencyNode(streamNodeId, latency);
+			MessageStatistics.latencyStream(streamId, latency);
 			// jitter
 		}
 		m_buffer.clear();

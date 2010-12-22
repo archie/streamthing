@@ -1,6 +1,8 @@
 package eu.emdc.streamthing.stats;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -10,34 +12,68 @@ import java.util.Map;
 public class MessageStatistics {
 
 	public static Map<Integer, Integer> messageCountMap = new HashMap<Integer, Integer>();
-	public static Map<Integer, Long> latencyMap = new HashMap<Integer, Long>();
-	public static Map<Integer, Integer> droppedMap = new HashMap<Integer, Integer>();
+	
+	// latency
+	public static Map<Integer, Long> latencyNodeMap = new HashMap<Integer, Long>();
+	public static Map<Integer, Long> latencyStreamMap = new HashMap<Integer, Long>();
+	
+	// packet loss
+	public static Map<Integer, Integer> droppedNodeMap = new HashMap<Integer, Integer>();
+	public static Map<Integer, Integer> droppedStreamMap = new HashMap<Integer, Integer>();
 	public static Map<Integer, Integer> unknownMap = new HashMap<Integer, Integer>();
 	
-	public static void latency(int streamNodeId, long time) {
+	// upload capacity
+	public static Map<Integer, Integer> peakUploadNodeMap = new HashMap<Integer, Integer>();
+	public static Map<Integer, List<Integer>> bandwidthNodeMap = new HashMap<Integer, List<Integer>>();
+	
+	public static void latencyNode(int streamNodeId, long time) {
 		if (messageCountMap.containsKey(streamNodeId)) 
 		{
 			int d = messageCountMap.get(streamNodeId);
 			messageCountMap.put(streamNodeId, d+1);
-			long oldLatency = latencyMap.get(streamNodeId);
-			latencyMap.put(streamNodeId, oldLatency+time);
+			long oldLatency = latencyNodeMap.get(streamNodeId);
+			latencyNodeMap.put(streamNodeId, oldLatency+time);
 		} 
 		else 
 		{
 			messageCountMap.put(streamNodeId, 1);
-			latencyMap.put(streamNodeId, time);
+			latencyNodeMap.put(streamNodeId, time);
 		}
 	}
 	
-	public static void dropped(int streamNodeId) {
-		if (droppedMap.containsKey(streamNodeId)) 
+	public static void latencyStream(int streamId, long time) {
+		if (latencyStreamMap.containsKey(streamId)) 
 		{
-			int d = droppedMap.get(streamNodeId);
-			droppedMap.put(streamNodeId, d+1);
+			long oldLatency = latencyStreamMap.get(streamId);
+			latencyStreamMap.put(streamId, oldLatency+time);
+		} 
+		else 
+		{
+			latencyStreamMap.put(streamId, time);
+		}
+	}
+	
+	public static void droppedNode(int streamNodeId) {
+		if (droppedNodeMap.containsKey(streamNodeId)) 
+		{
+			int d = droppedNodeMap.get(streamNodeId);
+			droppedNodeMap.put(streamNodeId, d+1);
 		}
 		else
 		{
-			droppedMap.put(streamNodeId, 1);
+			droppedNodeMap.put(streamNodeId, 1);
+		}
+	}
+	
+	public static void droppedStream(int streamId) {
+		if (droppedStreamMap.containsKey(streamId)) 
+		{
+			int d = droppedStreamMap.get(streamId);
+			droppedStreamMap.put(streamId, d+1);
+		}
+		else
+		{
+			droppedStreamMap.put(streamId, 1);
 		}
 	}
 
@@ -50,6 +86,23 @@ public class MessageStatistics {
 		else
 		{
 			unknownMap.put(streamNodeId, 1);
+		}
+	}
+	
+	public static void bandwidth(int streamNodeId, int bw) {
+		if (peakUploadNodeMap.containsKey(streamNodeId)) {
+			// if higher update peak
+			if (bw > peakUploadNodeMap.get(streamNodeId))
+				peakUploadNodeMap.put(streamNodeId, bw);
+			
+			bandwidthNodeMap.get(streamNodeId).add(bw);
+			
+		}
+		else 
+		{
+			peakUploadNodeMap.put(streamNodeId, bw);
+			bandwidthNodeMap.put(streamNodeId, new ArrayList<Integer>());
+			bandwidthNodeMap.get(streamNodeId).add(bw);
 		}
 	}
 	

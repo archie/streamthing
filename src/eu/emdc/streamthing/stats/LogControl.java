@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -37,35 +38,72 @@ public class LogControl implements Control {
 		
 		try {
 			dataOutStream = new PrintWriter(new File(filename));
-			Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry pairs = (Map.Entry)it.next();
-				dataOutStream.print("packets: " + pairs.getKey() + "\t" + ((NodeData)pairs.getValue()).packets);
-				dataOutStream.println();
-			}
 			
-			Iterator<Entry<Integer, Long>> latencies = MessageStatistics.latencyMap.entrySet().iterator();
-			while (latencies.hasNext()) {
-				Entry<Integer, Long> latencyEntry = latencies.next();
-				dataOutStream.println("latency: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue()/MessageStatistics.messageCountMap.get(latencyEntry.getKey()));
-			}
+			// packets 
+			printPackets(dataOutStream);
 			
-			Iterator<Entry<Integer, Integer>> drops = MessageStatistics.droppedMap.entrySet().iterator();
-			while (drops.hasNext()) {
-				Entry<Integer, Integer> dropEntry = drops.next();
-				dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
-			}
-			
-			Iterator<Entry<Integer, Integer>> unknown = MessageStatistics.unknownMap.entrySet().iterator();
-			while (unknown.hasNext()) {
-				Entry<Integer, Integer> unknownEntry = unknown.next();
-				dataOutStream.println("unknown: " + unknownEntry.getKey() + "\t" + unknownEntry.getValue());
-			}
+			// latency
+			printLatency(dataOutStream);
+
+			// bandwidth
+			printBandwidth(dataOutStream);
 			
 			dataOutStream.close();
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} 
+	}
+	
+	private void printPackets(PrintWriter dataOutStream) {
+		Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry)it.next();
+			dataOutStream.print("packets: " + pairs.getKey() + "\t" + ((NodeData)pairs.getValue()).packets);
+			dataOutStream.println();
+		}
+		Iterator<Entry<Integer, Integer>> drops = MessageStatistics.droppedNodeMap.entrySet().iterator();
+		while (drops.hasNext()) {
+			Entry<Integer, Integer> dropEntry = drops.next();
+			dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
+		}
+	}
+	
+	private void printLatency(PrintWriter dataOutStream) {
+		Iterator<Entry<Integer, Long>> latencies;
+		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
+		while (latencies.hasNext()) {
+			Entry<Integer, Long> latencyEntry = latencies.next();
+			dataOutStream.println("latency-node: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
+		}
+		
+		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
+		while (latencies.hasNext()) {
+			Entry<Integer, Long> latencyEntry = latencies.next();
+			dataOutStream.println("latency-stream: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
+		}
+		
+	}
+	
+	private void printBandwidth(PrintWriter dataOutStream) {
+		// peak node
+		Iterator<Entry<Integer, Integer>> peaks = MessageStatistics.peakUploadNodeMap.entrySet().iterator();
+		while (peaks.hasNext()) {
+			Entry<Integer, Integer> peak = peaks.next();
+			dataOutStream.println("peak-node: " + peak.getKey() + "\t" + peak.getValue());
+		}
+		
+		// avg upload
+		Iterator<Entry<Integer, List<Integer>>> avgs = MessageStatistics.bandwidthNodeMap.entrySet().iterator();
+		while (avgs.hasNext()) {
+			Entry<Integer, List<Integer>> avg = avgs.next();
+			
+			int total = 0;
+			for (int i : avg.getValue())
+				total += i;
+			
+			int average = total / avg.getValue().size();
+			dataOutStream.println("avg-node: " + avg.getKey() + "\t" + average);
+		}
 	}
 
 }

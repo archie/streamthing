@@ -36,6 +36,8 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	protected int m_uploadBandwidthOfStreamsIPublish = 0;
 	protected Map<Integer, List<Integer> > m_latestPing; 
 	
+	static public int m_turbulenceCount = 0;
+	
 	static public Map<Integer, Long> m_streamIdToNodeId = new HashMap<Integer, Long>();
 
 	static public Map<Integer, Integer> m_videoStreamToStreamNodeId = new HashMap<Integer, Integer>();
@@ -82,11 +84,16 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					num = 0;
 				else
 					num = nw.GetChildren(m_myStreamNodeId).size ();
-				sum += entry.getValue() * num;
+				sum += entry.getValue() * num * 1000;
 			}
 		}
 		
-		sum += m_uploadBandwidthOfStreamsIPublish;
+		sum += m_uploadBandwidthOfStreamsIPublish * 1000;
+		
+		if (m_turbulenceManager != null) {
+			sum += m_turbulenceManager.getTurbulenceBandwidth();
+		}
+		System.out.println(m_myStreamNodeId + " sum:  "  + sum + " queue: " + m_transportControl.getQueueSize());
 		
 		return sum;
 	}
@@ -104,15 +111,20 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 	@Override
 	public void processEvent(Node node, int pid, Object event) {
-		if (event instanceof TransportWithDelayEvent) {
+		if (event instanceof TransportWithDelayEvent) 
+		{
 			Transport transport = (Transport) node.getProtocol(FastConfig
 					.getTransport(pid));
 			TransportWithDelayEvent e = (TransportWithDelayEvent) event;
 			transport.send(e.src, e.dest, e.msg, e.pid);
-		} else if (event instanceof StreamEvent) {
+		} 
+		else if (event instanceof StreamEvent) 
+		{
 			handleTrigger(node, (StreamEvent) event, pid);
 			return;
-		} else if (event instanceof VideoMessage) {
+		} 
+		else if (event instanceof VideoMessage) 
+		{
 			VideoMessage eventMsg = (VideoMessage) event;
 
 			if (m_streamsISubscribeTo.size() == 0) {
@@ -123,14 +135,25 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 			if (eventMsg.streamId >= 0 && m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
 				m_streamManager.processVideoMessage(node, eventMsg, pid);
-		} else if (event instanceof VideoPublishEvent) {
+		} 
+		else if (event instanceof VideoPublishEvent) 
+		{
 			m_streamManager.streamVideo(node, (VideoPublishEvent) event, pid);
-		} else if (event instanceof VideoTransportEvent) {
+		} 
+		else if (event instanceof VideoTransportEvent) 
+		{
 			m_transportControl.transportMessages(node, pid);
-		} else if (event instanceof StreamMessage) {
+		}
+		else if (event instanceof StreamMessage) 
+		{
 			handleMessage(node, (StreamMessage) event, pid);
 			return;
-		} else {
+		}
+		else if (event instanceof TurbulenceEvent) {
+			m_turbulenceManager.sendTurbulence(node, (TurbulenceEvent)event, pid);
+		}
+		else 
+		{
 			System.err.println("Unknown message!");
 		}
 	}
@@ -305,7 +328,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Notify StreamManager
 			break;
 		case TURBULENCE:
-			System.out.println("I can haz the shaiiiaiiit! ");
+			/*
 			if (m_turbulenceManager == null) {
 				m_turbulenceManager = new TurbulenceManager(m_transportControl, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
 			}
@@ -314,7 +337,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					msg.GetEventParams().get(1).intValue(), 
 					msg.GetEventParams().get(2).intValue(),
 					msg.GetEventParams().get(3).intValue(), pid);
-			
+			*/
 			break;
 		case TIMEOUT:
 			

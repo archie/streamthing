@@ -30,8 +30,10 @@ public class PacketLoss implements Transport {
 		
 		if ((dt = m_nodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
 				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
-			System.out.println("Delay: " + dt.GetMinDelay() + " - " + dt.GetMaxDelay());
-			return CommonState.r.nextLong() - (long)dt.GetMinDelay();
+			//System.out.println("Delay: " + dt.GetMinDelay() + " - " + dt.GetMaxDelay());
+
+			long x = (long)dt.GetMinDelay() + CommonState.r.nextLong((long)(dt.GetMaxDelay() - dt.GetMinDelay()));
+			return x;
 		}
 		
 		return 1;

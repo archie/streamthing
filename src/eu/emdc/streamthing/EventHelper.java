@@ -85,7 +85,7 @@ public class EventHelper {
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 	}

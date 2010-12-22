@@ -68,7 +68,17 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		int sum = 0;
 		while (iter.hasNext()) {
 			Entry<Integer, Integer> entry = iter.next();
-			sum += entry.getValue();
+			NodeWorld nw = m_videoStreamIdToMulticastTreeMap.get (entry.getKey());
+			
+			if(nw != null)
+			{
+				int num;
+				if (nw.GetChildren(m_myStreamNodeId) == null)
+					num = 0;
+				else
+					num = nw.GetChildren(m_myStreamNodeId).size ();
+				sum += entry.getValue() * num;
+			}
 		}
 		
 		sum += m_uploadBandwidthOfStreamsIPublish;

@@ -62,6 +62,17 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		return null;
 	}
 	
+	public int TotalAmountOfUpload (){
+		Iterator<Entry<Integer, Integer>> iter = m_streamsISubscribeTo.entrySet().iterator();
+		int sum = 0;
+		while (iter.hasNext()) {
+			Entry<Integer, Integer> entry = iter.next();
+			sum += entry.getValue();
+		}
+		
+		return sum;
+	}
+	
 	public void cleanup (){
 		m_streamsISubscribeTo.clear ();
 		m_latestPing.clear ();

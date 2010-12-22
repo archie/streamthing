@@ -1,6 +1,5 @@
 package eu.emdc.streamthing;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,14 +8,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import eu.emdc.streamthing.message.*;
-import eu.emdc.streamthing.stats.Debug;
 import eu.emdc.streamthing.stats.MessageStatistics;
 
 import peersim.cdsim.CDProtocol;
 import peersim.config.Configuration;
 import peersim.config.FastConfig;
-import peersim.core.CommonState;
-import peersim.core.IdleProtocol;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
@@ -184,6 +180,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					fu= new Float(5000);
 				}
 				m_streamManager = new StreamManager(transport, fu.intValue());
+				MessageStatistics.bandwidth(m_myStreamNodeId, TotalAmountOfUpload());
 			}
 			
 			//System.out.println(m_myStreamNodeId +" Imma subscribe to : " + msg.streamId + " with rate " + msg.streamRate);
@@ -279,6 +276,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_streamManager.startStream(src, pid, msg.GetEventParams().get(0).intValue());
 			
 			m_streamsIPublish.add(msg.GetEventParams().get(0).intValue());
+			
+			// update stats
+			MessageStatistics.bandwidth(m_myStreamNodeId, TotalAmountOfUpload());
 			
 			break;
 		case SUBSCRIBE:

@@ -137,6 +137,9 @@ public class NodeWorld {
 		//System.out.println("Parent of " + nodeToBeRemovedStreamId + " is " + parent);
 		List<Integer> tempvect = m_childrenMap.get (parent);						// Get parent's children
 		
+		if (tempvect == null)
+			tempvect = new ArrayList<Integer>();
+		
 		for (int i =0; i < tempvect.size (); i++)
 		{
 			// Remove node from parent's children vect

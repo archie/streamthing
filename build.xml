@@ -34,10 +34,10 @@
 
   <target name="graphs">
     <mkdir dir="graphs" />
-<!--    <exec executable="/bin/sh" outputproperty="dropped.data">
+    <exec executable="/bin/sh" outputproperty="dropped.data">
       <arg value="-c" />
       <arg value="cat logfile.data | grep dropped | awk '{ print $3, $2 }' | sort -rg &gt; graphs/dropped.data" />
-    </exec>-->
+    </exec>
     <exec executable="/bin/sh" outputproperty="packets.data">
       <arg value="-c" />
       <arg value="cat logfile.data | grep 'packets' | awk '{ print $3, $2 }' | sort -rg &gt; graphs/packets.data" />
@@ -48,7 +48,7 @@
     </exec>
     <exec executable="/bin/sh">
       <arg value="-c" />
-      <arg value="cat logfile.data | grep 'latency-node' | awk '{ print $2, $3 }' | sort -g &gt; graphs/latency-avg.data" />
+      <arg value="cat logfile.data | grep 'latency-node' | awk '{ print $3, $2 }' | sort -rg &gt; graphs/latency-avg.data" />
     </exec>
     <exec executable="/bin/sh">
       <arg value="-c" />

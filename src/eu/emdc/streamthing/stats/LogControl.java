@@ -66,6 +66,9 @@ public class LogControl implements Control {
 			Entry<Integer, Integer> dropEntry = drops.next();
 			dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
 		}
+		// hack to make graphing easier
+		if (MessageStatistics.droppedNodeMap.size() == 0)
+			dataOutStream.println("dropped: 0\t0");
 	}
 	
 	private void printLatency(PrintWriter dataOutStream) {
@@ -89,7 +92,8 @@ public class LogControl implements Control {
 		Iterator<Entry<Integer, Integer>> peaks = MessageStatistics.peakUploadNodeMap.entrySet().iterator();
 		while (peaks.hasNext()) {
 			Entry<Integer, Integer> peak = peaks.next();
-			dataOutStream.println("peak-node: " + peak.getKey() + "\t" + peak.getValue());
+			if (peak.getValue() > 0)
+				dataOutStream.println("peak-node: " + peak.getKey() + "\t" + peak.getValue());
 		}
 		
 		// avg upload
@@ -102,7 +106,8 @@ public class LogControl implements Control {
 				total += i;
 			
 			int average = total / avg.getValue().size();
-			dataOutStream.println("avg-node: " + avg.getKey() + "\t" + average);
+			if (average > 0)
+				dataOutStream.println("avg-node: " + avg.getKey() + "\t" + average);
 		}
 	}
 

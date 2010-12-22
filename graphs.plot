@@ -1,4 +1,3 @@
-set title "StreamThing Results"
 set term png small size 1024,768
 set output "graphs/test.png"
 set size 2.0, 2.0
@@ -12,7 +11,8 @@ set xlabel "Nodes"
 set ylabel "Packets"
 set ytics
 set grid
-plot "graphs/packets.data" using 1 title "packets"
+plot "graphs/packets.data" using 1 title "packets", \
+     "graphs/dropped.data" using 1 title "dropped"
 
 #stream latency#
 set title "Stream latencies"
@@ -32,7 +32,7 @@ set xlabel "Node"
 set ylabel "Latency"
 set grid
 set ytics 
-plot "graphs/latency-avg.data" using 1:2 title ""
+plot "graphs/latency-avg.data" using 1 title ""
 
 #bandwidth#
 set title "Node bandwidths"

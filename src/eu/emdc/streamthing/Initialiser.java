@@ -68,7 +68,7 @@ public class Initialiser implements Control {
 				EDSimulator.add(0, event, node, streamThingPid);
 				break;
 			case FAIL:
-				System.err.println("OMGIMMAFAIL: " + event.GetNodeId() + " --- " + StreamThing.m_streamIdToNodeId.get (event.GetNodeId()));
+				//System.err.println("OMGIMMAFAIL: " + event.GetNodeId() + " --- " + StreamThing.m_streamIdToNodeId.get (event.GetNodeId()));
 				
 				// Clean up the node's data structures:
 				Node n = getNodeFromStreamNodeId(event.GetNodeId());

@@ -38,13 +38,12 @@ public class TransportControl {
 	
 	public void transportMessages(Node src, int pid) {
 		VideoMessage msg;
-		
+		StreamThing s = (StreamThing)src.getProtocol(Configuration.lookupPid("streamthing")); // this is a little redundant
 		msg = m_output.get();
 		if (msg != null) {
 			if (StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
 			{
 				Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
-				StreamThing s = (StreamThing)dest.getProtocol(Configuration.lookupPid("streamthing")); // this is a little redundant
 				if (dest != null && s.m_myStreamNodeId != -1) {
 					TransportWithDelayEvent e = new TransportWithDelayEvent();
 					e.src = src; e.dest = dest; e.msg = msg; e.pid = pid;

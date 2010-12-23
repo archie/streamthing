@@ -75,8 +75,12 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	public long latency(Node src, Node dest) {
 		DelayTuple dt = null;
 		
-		if ((dt = NodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
-				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
+		StreamThing s_src = (StreamThing)src.getProtocol(Configuration.lookupPid("streamthing")); 
+		StreamThing s_dest = (StreamThing)dest.getProtocol(Configuration.lookupPid("streamthing")); 
+		if (s_src.m_myStreamNodeId == -1 || s_dest.m_myStreamNodeId == -1)
+			return 5; 
+		
+		if ((dt = NodeConfig.GetDelayTupleForNodePair(s_src.m_myStreamNodeId, s_dest.m_myStreamNodeId)) != null) {
 			
 			long x = (long)dt.GetMinDelay() + CommonState.r.nextLong((long)(dt.GetMaxDelay() - dt.GetMinDelay()));
 			return x;

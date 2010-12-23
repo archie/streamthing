@@ -14,6 +14,7 @@ import eu.emdc.streamthing.transport.TransportControl;
 import peersim.cdsim.CDProtocol;
 import peersim.config.Configuration;
 import peersim.config.FastConfig;
+import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
@@ -22,7 +23,7 @@ import peersim.transport.Transport;
 public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 	private static final String PAR_CAPACITY = "capacityfile";
-	public NodeConfig m_nodeConfig = new NodeConfig();
+	private static final String NODE_LATENCY = "latencyfile";
 	
 	/* implementation */
 	protected String prefix;
@@ -65,9 +66,23 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 	
 	public StreamThing(String prefix) {
 		this.prefix = prefix;
-		m_nodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
+		NodeConfig.InitialiseUploadCapacity(Configuration.getString(prefix + "." + PAR_CAPACITY));
+		NodeConfig.InitialiseLatencyMap(Configuration.getString(prefix + "." + NODE_LATENCY));
 		m_streamsISubscribeTo = new HashMap<Integer, Integer>();
 		m_latestPing = new HashMap<Integer, List<Integer> >();
+	}
+	
+	public long latency(Node src, Node dest) {
+		DelayTuple dt = null;
+		
+		if ((dt = NodeConfig.GetDelayTupleForNodePair(StreamThing.GetStreamIdFromNodeId(src.getID()), 
+				StreamThing.GetStreamIdFromNodeId(dest.getID()))) != null) {
+			
+			long x = (long)dt.GetMinDelay() + CommonState.r.nextLong((long)(dt.GetMaxDelay() - dt.GetMinDelay()));
+			return x;
+		}
+		
+		return 5; // assumed standard latency
 	}
 	
 	public int TotalAmountOfUpload (){
@@ -93,7 +108,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 		if (m_turbulenceManager != null) {
 			sum += m_turbulenceManager.getTurbulenceBandwidth();
 		}
-		//System.out.println(m_myStreamNodeId + " sum:  "  + sum + " queue: " + m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
+		//System.out.println(m_myStreamNodeId + " sum:  "  + sum + " queue: " + m_transportControl.getQueueSize());
 		
 		return sum;
 	}
@@ -135,6 +150,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 
 			if (eventMsg.streamId >= 0 && m_streamsISubscribeTo.containsKey((eventMsg.streamId)))
 				m_streamManager.processVideoMessage(node, eventMsg, pid);
+			else if (eventMsg.streamId == -1) 
+				MessageStatistics.latencyNode(eventMsg.source, CommonState.getTime()-eventMsg.sent);
+				
 		} 
 		else if (event instanceof VideoPublishEvent) 
 		{
@@ -166,7 +184,6 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			s.m_streamManager = null;
 			s.m_turbulenceManager = null;
 			s.m_transportControl = null;
-			s.m_nodeConfig = new NodeConfig();
 			s.m_myStreamNodeId = -1;
 			s.m_streamsISubscribeTo = new HashMap<Integer, Integer>();
 			s.m_latestPing = new HashMap<Integer, List<Integer> >();
@@ -196,11 +213,11 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Join the multicast tree
 			
 			NodeWorld nwToJoin = m_videoStreamIdToMulticastTreeMap.get (msg.streamId);	
-			nwToJoin.AddNode(m_myStreamNodeId, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
+			nwToJoin.AddNode(m_myStreamNodeId, NodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
 
 			// in case I'm not a publisher (most likely), I need a stream manager to be able to forward data
 			if (m_streamManager == null) {
-				Float fu = m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
+				Float fu = NodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
 				if (fu == null) {
 					fu= new Float(5000);
 				}
@@ -259,7 +276,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			m_myStreamNodeId = msg.GetNodeId();
 			StreamThing.m_streamIdToNodeId.put (m_myStreamNodeId,  src.getID());
 			
-			m_transportControl = new TransportControl(m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
+			m_transportControl = new TransportControl(NodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
 			
 			break;
 		case LEAVE:
@@ -284,7 +301,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			
 			// Create new multicast tree
 			System.out.println(m_myStreamNodeId + " is going to publish ");
-			Float f = m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
+			Float f = NodeConfig.GetUploadCapacityForNode(m_myStreamNodeId);
 			if (f == null) {
 				f = new Float(5000);
 			}
@@ -328,16 +345,16 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			// Notify StreamManager
 			break;
 		case TURBULENCE:
-			/*
+			
 			if (m_turbulenceManager == null) {
-				m_turbulenceManager = new TurbulenceManager(m_transportControl, m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
+				m_turbulenceManager = new TurbulenceManager(m_transportControl, NodeConfig.GetUploadCapacityForNode(m_myStreamNodeId).intValue());
 			}
 			
 			m_turbulenceManager.startTurbulence(src, msg.GetEventParams().get(0).intValue(), 
 					msg.GetEventParams().get(1).intValue(), 
 					msg.GetEventParams().get(2).intValue(),
 					msg.GetEventParams().get(3).intValue(), pid);
-			*/
+			
 			break;
 		case TIMEOUT:
 			

@@ -81,13 +81,17 @@ public class LogControl implements Control {
 		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
 		while (latencies.hasNext()) {
 			Entry<Integer, Long> latencyEntry = latencies.next();
-			dataOutStream.println("latency-node: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
+			dataOutStream.println("latency-node: " + latencyEntry.getKey() + "\t" + 
+					latencyEntry.getValue()/MessageStatistics.messageCountMap.get(latencyEntry.getKey()));
 		}
 		
 		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
 		while (latencies.hasNext()) {
 			Entry<Integer, Long> latencyEntry = latencies.next();
-			dataOutStream.println("latency-stream: " + latencyEntry.getKey() + "\t" + latencyEntry.getValue());
+			System.out.println(latencyEntry.getValue() + " " + MessageStatistics.streamMessageCountMap.get(latencyEntry.getKey()));
+			
+			dataOutStream.println("latency-stream: " + latencyEntry.getKey() + "\t" + 
+					latencyEntry.getValue()/MessageStatistics.streamMessageCountMap.get(latencyEntry.getKey()));
 		}
 		
 	}

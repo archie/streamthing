@@ -12,6 +12,7 @@ import java.util.Map;
 public class MessageStatistics {
 
 	public static Map<Integer, Integer> messageCountMap = new HashMap<Integer, Integer>();
+	public static Map<Integer, Integer> streamMessageCountMap = new HashMap<Integer, Integer>();
 	
 	// latency
 	public static Map<Integer, Long> latencyNodeMap = new HashMap<Integer, Long>();
@@ -44,11 +45,15 @@ public class MessageStatistics {
 	public static void latencyStream(int streamId, long time) {
 		if (latencyStreamMap.containsKey(streamId)) 
 		{
+			int d = streamMessageCountMap.get(streamId);
+			streamMessageCountMap.put(streamId, d+1);
+			
 			long oldLatency = latencyStreamMap.get(streamId);
 			latencyStreamMap.put(streamId, oldLatency+time);
 		} 
 		else 
 		{
+			streamMessageCountMap.put(streamId, 1);
 			latencyStreamMap.put(streamId, time);
 		}
 	}

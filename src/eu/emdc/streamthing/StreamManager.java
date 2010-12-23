@@ -99,7 +99,7 @@ public class StreamManager {
 
 		for (int dest : children) 
 		{
-			streamMsg = new VideoMessage(node);
+			streamMsg = new VideoMessage(StreamThing.GetStreamIdFromNodeId(node.getID()));
 			streamMsg.streamId = streamId;
 			streamMsg.destStreamNodeId= dest;
 			streamMsg.streamRate = streamRate;
@@ -115,12 +115,10 @@ public class StreamManager {
 	}
 	
 	private void consumeVideo(Node node, int streamId) {
-		int streamNodeId = StreamThing.GetStreamIdFromNodeId(node.getID());
 		for (VideoMessage msg : m_buffer) {
 			long latency = CommonState.getTime() - msg.sent;
-			MessageStatistics.latencyNode(streamNodeId, latency);
+			MessageStatistics.latencyNode(msg.source, latency);
 			MessageStatistics.latencyStream(streamId, latency);
-			
 		}
 		m_buffer.clear();
 	}

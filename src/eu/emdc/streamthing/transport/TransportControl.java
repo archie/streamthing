@@ -1,5 +1,6 @@
 package eu.emdc.streamthing.transport;
 
+import peersim.config.Configuration;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
 import eu.emdc.streamthing.StreamThing;
@@ -43,10 +44,12 @@ public class TransportControl {
 			if (StreamThing.m_streamIdToNodeId.containsKey(msg.destStreamNodeId))
 			{
 				Node dest = StreamThing.GetNodeFromNodeId(StreamThing.m_streamIdToNodeId.get(msg.destStreamNodeId));
+				StreamThing s = (StreamThing)dest.getProtocol(Configuration.lookupPid("streamthing")); // this is a little redundant
+				
 				if (dest != null) {
 					TransportWithDelayEvent e = new TransportWithDelayEvent();
 					e.src = src; e.dest = dest; e.msg = msg; e.pid = pid;
-					EDSimulator.add(PacketLoss.latency(src, dest), e, src, pid);
+					EDSimulator.add(s.latency(src, dest), e, src, pid);
 				}
 			}
 		}

@@ -66,11 +66,11 @@ public class TurbulenceManager {
 	}
 
 	public void sendTurbulence(Node src, TurbulenceEvent event, int pid) {
-		System.out.println(event.turbulenceId + " src: " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + m_turbulence.get(event.turbulenceId).streamDestId);
+		//System.out.println(event.turbulenceId + " src: " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + m_turbulence.get(event.turbulenceId).streamDestId);
 		if (m_turbulence.containsKey(event.turbulenceId)) {
 			TurbulenceData data = m_turbulence.get(event.turbulenceId);
 
-			VideoMessage msg = new VideoMessage(src);
+			VideoMessage msg = new VideoMessage(StreamThing.GetStreamIdFromNodeId(src.getID()));
 			msg.destStreamNodeId = data.streamDestId;
 			msg.streamId = -1;
 

@@ -8,8 +8,8 @@ public class VideoMessage extends StreamMessage {
 	public int group_id;
 	public int destStreamNodeId;
 	
-	public VideoMessage(Node source) {
-		super(MessageType.VIDEO, 0);
+	public VideoMessage(int streamSourceId) {
+		super(MessageType.VIDEO, streamSourceId);
 	}
 
 }

@@ -7,12 +7,12 @@ import java.io.*;
 
 public class NodeConfig {
 
-	public static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > ();
-	public static Map<Integer, Float > uploadCapacityMap =  new HashMap <Integer, Float> ();
+	private static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > ();
+	private static Map<Integer, Float > uploadCapacityMap =  new HashMap <Integer, Float> ();
 
-	private int m_numNodes; // Being re-used. No consequences I guess - Lalith
+	private static int m_numNodes; // Being re-used. No consequences I guess - Lalith
 	
-	public void InitialiseLatencyMap (String configFile){
+	public static void InitialiseLatencyMap (String configFile){
 		
 		try
 		{
@@ -54,7 +54,7 @@ public class NodeConfig {
 		
 	}
 	
-	public void InitialiseUploadCapacity (String configFile){
+	public static void InitialiseUploadCapacity (String configFile){
 				
 		try
 		{
@@ -83,11 +83,11 @@ public class NodeConfig {
 		}
 	}
 	
-	public int GetNNodes (){
+	public static int GetNNodes (){
 		return m_numNodes;
 	}
 	
-	public DelayTuple GetDelayTupleForNodePair (int nodeA, int nodeB){
+	public static DelayTuple GetDelayTupleForNodePair (int nodeA, int nodeB){
 		try
 		{
 			return latencyMap.get(nodeA).get(nodeB);
@@ -99,7 +99,7 @@ public class NodeConfig {
 		}
 	}
 	
-	public Float GetUploadCapacityForNode (int nodeId){
+	public static Float GetUploadCapacityForNode (int nodeId){
 		try
 		{
 			return uploadCapacityMap.get(nodeId);

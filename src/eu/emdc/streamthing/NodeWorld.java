@@ -88,7 +88,7 @@ public class NodeWorld {
 			}
 				
 			 // Double check for the parent map
-			if (m_parentMap.containsKey(streamIndex) && (st.TotalAmountOfUpload() + m_uploadRateOfStream < st.m_nodeConfig.GetUploadCapacityForNode(streamIndex)))
+			if (m_parentMap.containsKey(streamIndex) && (st.TotalAmountOfUpload() + m_uploadRateOfStream < NodeConfig.GetUploadCapacityForNode(streamIndex)))
 			{
 				//System.out.println("correcto: found node:" + streamIndex + " streamId:" + m_videoStreamId + " can haz:" + st.TotalAmountOfUpload());
 				break;
@@ -242,6 +242,10 @@ public class NodeWorld {
 		}
 		
 		m_childrenMap.remove (nodeToBeRemovedStreamId);
+	}
+	
+	public int getRootNode() {
+		return m_sourceNodeStreamId;
 	}
 	
 	public List<Integer> GetChildren (int queryingNodeStreamId)

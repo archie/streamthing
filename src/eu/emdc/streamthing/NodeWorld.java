@@ -51,7 +51,7 @@ public class NodeWorld {
 		for (;;)
 		{
 			int x = CommonState.r.nextInt(m_parentMap.size ());
-			//System.err.println(newNodeStreamId + " is going to join with loc " + x);
+			//	System.err.println(newNodeStreamId + " is going to join with loc " + x);
 			Iterator<Entry<Integer, Integer>> iter = m_parentMap.entrySet().iterator();
 			while (x != 0)
 			{
@@ -70,10 +70,14 @@ public class NodeWorld {
 			//System.err.println("Found " + streamIndex);
 			Node potentialParent = StreamThing.GetNodeFromStreamId(streamIndex);
 			
+			// Node has failed/left,
 			if (potentialParent == null)
 			{
-				// Node has failed/left, find another one
-				continue;
+				// It's not the publisher
+				if (streamIndex != m_sourceNodeStreamId)
+					continue;
+				else
+					break; // Is the publisher. Forget it.
 			}
 			
 			StreamThing st = (StreamThing) potentialParent.getProtocol(Configuration.lookupPid("streamthing"));
@@ -195,15 +199,19 @@ public class NodeWorld {
 				
 				streamIndex = entry.getKey();
 				
-				//System.err.println("Found " + streamIndex);
-				Node potentialParent = StreamThing.GetNodeFromStreamId(streamIndex);
 				
+				Node potentialParent = StreamThing.GetNodeFromStreamId(streamIndex);
+
+				// Node has failed/left
 				if (potentialParent == null)
 				{
-					// Node has failed/left, find another one
-					continue;
+					// It's not the publisher
+					if (streamIndex != m_sourceNodeStreamId)
+						continue;
+					else
+						break; // Is the publisher. Forget it.
 				}
-				
+				//System.err.println("Found " + streamIndex);
 				StreamThing st = (StreamThing) potentialParent.getProtocol(Configuration.lookupPid("streamthing"));
 				
 				if (st == null){
@@ -212,7 +220,7 @@ public class NodeWorld {
 				}
 					
 				 // Double check for the parent map
-				if (m_parentMap.containsKey(streamIndex) && (st.TotalAmountOfUpload() + m_uploadRateOfStream < st.m_nodeConfig.GetUploadCapacityForNode(streamIndex)))
+				if (m_parentMap.containsKey(streamIndex)) //&& (st.TotalAmountOfUpload() + m_uploadRateOfStream < st.m_nodeConfig.GetUploadCapacityForNode(streamIndex)))
 				{
 					//System.out.println("correcto: found node:" + streamIndex + " streamId:" + m_videoStreamId + " can haz:" + st.TotalAmountOfUpload());
 					break;

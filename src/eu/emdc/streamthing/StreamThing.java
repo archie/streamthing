@@ -131,7 +131,9 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			Transport transport = (Transport) node.getProtocol(FastConfig
 					.getTransport(pid));
 			TransportWithDelayEvent e = (TransportWithDelayEvent) event;
-			transport.send(e.src, e.dest, e.msg, e.pid);
+			if (m_myStreamNodeId >= 0)
+				transport.send(e.src, e.dest, e.msg, e.pid);
+			
 		} 
 		else if (event instanceof StreamEvent) 
 		{

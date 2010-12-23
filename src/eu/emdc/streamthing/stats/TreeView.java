@@ -17,7 +17,7 @@ import peersim.core.Control;
 
 public class TreeView implements Control {
 
-	private Map<Integer, String> m_streamIdToColor = new HashMap<Integer, String>();
+	private static Map<Integer, String> m_streamIdToColor = new HashMap<Integer, String>();
 
 	public TreeView(String prefix) {
 

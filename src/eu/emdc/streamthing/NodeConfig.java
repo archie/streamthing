@@ -13,7 +13,6 @@ public class NodeConfig {
 	private static int m_numNodes; // Being re-used. No consequences I guess - Lalith
 	
 	public static void InitialiseLatencyMap (String configFile){
-		
 		try
 		{
 			Scanner scanner = new Scanner (new File(configFile));
@@ -34,7 +33,15 @@ public class NodeConfig {
 				nodeB = scanner.nextInt ();
 				minDelay = scanner.nextInt ();
 				maxDelay = scanner.nextInt ();
-				Map< Integer, DelayTuple > innerMap = new HashMap<Integer, DelayTuple> ();
+				Map< Integer, DelayTuple > innerMap;
+				if (latencyMap.containsKey(nodeA))
+				{
+					innerMap = latencyMap.get (nodeA);
+				}
+				else
+				{
+					innerMap = new HashMap<Integer, DelayTuple> ();
+				}
 				DelayTuple delayTup = new DelayTuple();
 				delayTup.SetMinDelay(minDelay);
 				delayTup.SetMaxDelay(maxDelay);
@@ -88,6 +95,7 @@ public class NodeConfig {
 	}
 	
 	public static DelayTuple GetDelayTupleForNodePair (int nodeA, int nodeB){
+		
 		try
 		{
 			return latencyMap.get(nodeA).get(nodeB);

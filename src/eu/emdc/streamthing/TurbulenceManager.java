@@ -39,7 +39,7 @@ public class TurbulenceManager {
 		Iterator<Entry<Integer, TurbulenceData>> it = m_turbulence.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<Integer, TurbulenceData> e = it.next();
-			sum += e.getValue().rate * e.getValue().size;
+			sum += e.getValue().rate;// * e.getValue().size;
 		}
 				
 		return sum;
@@ -67,7 +67,7 @@ public class TurbulenceManager {
 
 	public void sendTurbulence(Node src, TurbulenceEvent event, int pid) {
 		System.out.println(event.turbulenceId + " src: " + StreamThing.GetStreamIdFromNodeId(src.getID()) + " to " + m_turbulence.get(event.turbulenceId).streamDestId);
-		/*if (m_turbulence.containsKey(event.turbulenceId)) {
+		if (m_turbulence.containsKey(event.turbulenceId)) {
 			TurbulenceData data = m_turbulence.get(event.turbulenceId);
 
 			VideoMessage msg = new VideoMessage(src);
@@ -86,6 +86,6 @@ public class TurbulenceManager {
 		if (m_transport.getQueueSize() == 1) {
 			EDSimulator.add(1000 / m_uploadCapacity, new VideoTransportEvent(),
 					src, pid);
-		}*/
+		}
 	}
 }

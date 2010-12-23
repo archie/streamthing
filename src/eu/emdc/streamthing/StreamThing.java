@@ -84,16 +84,16 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 					num = 0;
 				else
 					num = nw.GetChildren(m_myStreamNodeId).size ();
-				sum += entry.getValue() * num * 1000;
+				sum += entry.getValue() * num;
 			}
 		}
 		
-		sum += m_uploadBandwidthOfStreamsIPublish * 1000;
+		sum += m_uploadBandwidthOfStreamsIPublish;
 		
 		if (m_turbulenceManager != null) {
 			sum += m_turbulenceManager.getTurbulenceBandwidth();
 		}
-		System.out.println(m_myStreamNodeId + " sum:  "  + sum + " queue: " + m_transportControl.getQueueSize());
+		//System.out.println(m_myStreamNodeId + " sum:  "  + sum + " queue: " + m_nodeConfig.GetUploadCapacityForNode(m_myStreamNodeId));
 		
 		return sum;
 	}

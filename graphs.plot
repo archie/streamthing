@@ -32,7 +32,7 @@ set xlabel "Node"
 set ylabel "Latency"
 set grid
 set ytics 
-plot "graphs/latency-avg.data" using 1 title ""
+plot "graphs/latency-avg.data" using 1:2 title ""
 
 #bandwidth#
 set title "Node bandwidths"

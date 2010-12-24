@@ -7,7 +7,7 @@ import java.io.*;
 
 public class NodeConfig {
 
-	private static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > ();
+	private static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > (2000);
 	private static Map<Integer, Float > uploadCapacityMap =  new HashMap <Integer, Float> ();
 
 	private static int m_numNodes; // Being re-used. No consequences I guess - Lalith
@@ -40,7 +40,7 @@ public class NodeConfig {
 				}
 				else
 				{
-					innerMap = new HashMap<Integer, DelayTuple> ();
+					innerMap = new HashMap<Integer, DelayTuple> (2000);
 				}
 				DelayTuple delayTup = new DelayTuple();
 				delayTup.SetMinDelay(minDelay);

@@ -28,13 +28,12 @@ public class LogControl implements Control {
 	
 	@Override
 	public boolean execute() {
+		System.out.println("Writing latency, packets, drops, jitter, bandwidth to file: " + logfileName);
 		writeTransportLogToFile(logfileName);
-		System.err.println("Network size: " + Network.size());
 		return true;
 	}
 	
 	public void writeTransportLogToFile(String filename) {
-		System.err.println("LogControl: writing " + accountingProtocol.getNodesData().size() + " items to file");
 		PrintWriter dataOutStream;
 		
 		try {
@@ -51,7 +50,6 @@ public class LogControl implements Control {
 			
 			// bandwidth
 			printBandwidth(dataOutStream);
-			
 			
 			dataOutStream.close();
 		} catch (IOException ex) {
@@ -88,7 +86,6 @@ public class LogControl implements Control {
 		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
 		while (latencies.hasNext()) {
 			Entry<Integer, Long> latencyEntry = latencies.next();
-			System.out.println(latencyEntry.getValue() + " " + MessageStatistics.streamMessageCountMap.get(latencyEntry.getKey()));
 			
 			dataOutStream.println("latency-stream: " + latencyEntry.getKey() + "\t" + 
 					latencyEntry.getValue()/MessageStatistics.streamMessageCountMap.get(latencyEntry.getKey()));

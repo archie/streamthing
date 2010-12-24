@@ -23,7 +23,8 @@ public class Initialiser implements Control {
 	private static final String PAR_INIT = "init";
 
 	private int streamThingPid;
-	private Queue<StreamEvent> events;
+	private EventHelper eventHelper = new EventHelper();
+	private int m_eventsParsed = 0;
 
 	protected final NodeInitializer[] inits;
 
@@ -37,20 +38,18 @@ public class Initialiser implements Control {
 			inits[i] = (NodeInitializer) tmp[i];
 		}
 
-		EventHelper eventHelper = new EventHelper();
 		eventHelper.InitialiseEvents(Configuration.getString(prefix + EVENTS));
-
-		this.events = eventHelper.GetEventQueue();
-
 	}
 
 	public boolean execute() {
-		if (this.events.size() > 0
-				&& CommonState.getTime() == this.events.peek()
-						.GetExecutionTime()) {
-			StreamEvent event = this.events.remove();
+		StreamEvent event; 
+		if (m_eventsParsed <= eventHelper.m_numEvents-1)
+		{
+			if ((event = eventHelper.poll()) != null) 			
+				m_eventsParsed++;	
+			else 
+				return false;
 			
-
 			switch (event.GetEventType()) {
 			case JOIN:
 				Node node = (Node) Network.prototype.clone();

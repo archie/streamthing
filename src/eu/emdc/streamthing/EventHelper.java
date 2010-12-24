@@ -1,93 +1,116 @@
 package eu.emdc.streamthing;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.Scanner;
 import java.util.Vector;
 
 
 public class EventHelper {
 	
 	int m_numEvents;
-	float m_endTime;
+	private int m_eventsReadSoFar = 0;
+	long m_endTime;
+	private BufferedReader reader;
 	
 	Queue<StreamEvent> m_eventQueue = new PriorityQueue<StreamEvent>();
 	
 	public void InitialiseEvents (String eventFile){
 		try
 		{
-			Scanner scanner = new Scanner (new File (eventFile));
+			File file = new File(eventFile);
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
 			
 			// Reading from event file. First read event header
-			if (scanner.hasNext()){
-				m_numEvents = scanner.nextInt();
-			}
+			String line = reader.readLine();
+			String[] firstLine = line.split(" ");
+			m_numEvents = Integer.parseInt(firstLine[0]);
+			m_endTime = Long.parseLong(firstLine[1]);
 			
-			if (scanner.hasNext()){
-				m_endTime = scanner.nextFloat();
-			}
-				
-			// From here on, we know there's a minimum of three fields.
-			// Anything beyond that is appended into a vector.
-			int N = m_numEvents;
-					
-			while (N > 0){
-							
-				StreamEvent newEvent = new StreamEvent ();
-				newEvent.SetExecutionTime(scanner.nextFloat());
-				newEvent.SetNodeId(scanner.nextInt());
-				String et = scanner.next();
-				
-				Vector<Float> vect = new Vector<Float> ();
-				
-				if (et.equals("J")){
-					newEvent.SetEventType (StreamEventType.JOIN);
-				}
-				else if (et.equals("L")){
-					newEvent.SetEventType (StreamEventType.LEAVE);
-					// Blank vect
-				} 
-				else if (et.equals("F")){
-					newEvent.SetEventType (StreamEventType.FAIL);
-					// Blank vect
-				}
-				else if (et.equals("P")){
-					newEvent.SetEventType (StreamEventType.PUBLISH);
-					vect.add (scanner.nextFloat()); // Stream ID
-					vect.add (scanner.nextFloat()); // Stream duration
-					vect.add (scanner.nextFloat()); // Stream rate
-				}
-				else if (et.equals("S")){
-					newEvent.SetEventType (StreamEventType.SUBSCRIBE);
-					vect.add (scanner.nextFloat()); // Stream ID
-				}
-				else if (et.equals("U")){
-					newEvent.SetEventType (StreamEventType.UNSUBSCRIBE);
-					vect.add (scanner.nextFloat()); // Stream ID
-				}
-				else if (et.equals("T")){
-					newEvent.SetEventType (StreamEventType.TURBULENCE);
-					vect.add (scanner.nextFloat ());
-					vect.add (scanner.nextFloat ());
-					vect.add (scanner.nextFloat ());
-					vect.add (scanner.nextFloat ());
-				}
-				
-				newEvent.SetEventParams(vect);
-				
-				m_eventQueue.add (newEvent);
-				N--;
-			}
+			fillQueue(); // fill first time 
 		}
 		catch (Exception e)
 		{
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 		
 	}
 	
-	public Queue<StreamEvent> GetEventQueue (){
-		return m_eventQueue;
+	public StreamEvent poll() {
+		if (m_eventQueue.size() == 0)
+			if (!fillQueue())
+				return null;
+		
+		return m_eventQueue.poll();
 	}
+	
+	private boolean fillQueue() {
+		//System.out.println(" filling queue ");
+		String line = null; 
+		StreamEvent newEvent; 
+		
+		try {
+			if (m_eventsReadSoFar == m_numEvents)
+			{
+				reader.close();
+				return false;
+			}
+			for (int i = 0;  i < 1000; i++) { // read 1000 events at the time
+				if ((line = reader.readLine()) == null)
+					return false;
+				
+				m_eventsReadSoFar++;
+				
+				newEvent = parseLine(line.split(" "));
+				if (newEvent != null) {
+					m_eventQueue.add(newEvent);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//System.out.println("events read so far: " + m_eventsReadSoFar);
+		return true;
+	}
+	
+	private StreamEvent parseLine(String[] line) {
+		StreamEvent event = new StreamEvent();
+		event.SetExecutionTime(Float.parseFloat(line[0]));
+		event.SetNodeId(Integer.parseInt(line[1]));
+		event.SetEventType(getEventType(line[2]));
+		if (line.length > 3) {
+			event.SetEventParams(getEventParams(line));
+		}
+		return event;
+	}
+	
+	private Vector<Float> getEventParams(String[] line) {
+		Vector<Float> vect = new Vector<Float> ();
+		for (int i = 3; i < line.length; i++) {
+			vect.add(Float.parseFloat(line[i]));
+		}
+		return vect;
+	}
+	
+	private StreamEventType getEventType(String t) {
+		if (t.equals("J"))
+			return StreamEventType.JOIN;
+		else if (t.equals("L"))
+			return StreamEventType.LEAVE;
+		else if (t.equals("F"))
+			return StreamEventType.FAIL;
+		else if (t.equals("U"))
+			return StreamEventType.UNSUBSCRIBE;
+		else if (t.equals("S"))
+			return StreamEventType.SUBSCRIBE;
+		else if (t.equals("P"))
+			return StreamEventType.PUBLISH;
+		else 
+			return StreamEventType.TURBULENCE;
+	}
+	
 }

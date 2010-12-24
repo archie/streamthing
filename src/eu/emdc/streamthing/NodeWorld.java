@@ -5,12 +5,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
 
 import peersim.config.Configuration;
 import peersim.core.CommonState;
-import peersim.core.Network;
 import peersim.core.Node;
 
 /**

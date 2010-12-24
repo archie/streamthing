@@ -46,7 +46,7 @@ public class LogControl implements Control {
 			printLatency(dataOutStream);
 
 			// jitter
-			//printJitter(dataOutStream);
+			printJitter(dataOutStream);
 			
 			// bandwidth
 			printBandwidth(dataOutStream);
@@ -61,13 +61,14 @@ public class LogControl implements Control {
 		Iterator it = accountingProtocol.getNodesData().entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry pairs = (Map.Entry)it.next();
-			dataOutStream.print("packets: " + pairs.getKey() + "\t" + ((NodeData)pairs.getValue()).packets);
-			dataOutStream.println();
+			if (((NodeData)pairs.getValue()).packets > 0)
+				dataOutStream.println("packets: " + pairs.getKey() + "\t" + ((NodeData)pairs.getValue()).packets);
 		}
 		Iterator<Entry<Integer, Integer>> drops = MessageStatistics.droppedNodeMap.entrySet().iterator();
 		while (drops.hasNext()) {
 			Entry<Integer, Integer> dropEntry = drops.next();
-			dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
+			if (dropEntry.getValue() > 0)
+				dataOutStream.println("dropped: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
 		}
 		// hack to make graphing easier
 		if (MessageStatistics.droppedNodeMap.size() == 0)
@@ -79,7 +80,8 @@ public class LogControl implements Control {
 		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
 		while (latencies.hasNext()) {
 			Entry<Integer, Long> latencyEntry = latencies.next();
-			dataOutStream.println("latency-node: " + latencyEntry.getKey() + "\t" + 
+			if (latencyEntry.getKey() > 0)
+				dataOutStream.println("latency-node: " + latencyEntry.getKey() + "\t" + 
 					latencyEntry.getValue()/MessageStatistics.messageCountMap.get(latencyEntry.getKey()));
 		}
 		
@@ -87,7 +89,8 @@ public class LogControl implements Control {
 		while (latencies.hasNext()) {
 			Entry<Integer, Long> latencyEntry = latencies.next();
 			
-			dataOutStream.println("latency-stream: " + latencyEntry.getKey() + "\t" + 
+			if (latencyEntry.getKey() > 0)
+				dataOutStream.println("latency-stream: " + latencyEntry.getKey() + "\t" + 
 					latencyEntry.getValue()/MessageStatistics.streamMessageCountMap.get(latencyEntry.getKey()));
 		}
 		
@@ -98,7 +101,7 @@ public class LogControl implements Control {
 		Iterator<Entry<Integer, Integer>> peaks = MessageStatistics.peakUploadNodeMap.entrySet().iterator();
 		while (peaks.hasNext()) {
 			Entry<Integer, Integer> peak = peaks.next();
-			if (peak.getValue() > 0)
+			if (peak.getValue() > 0 && peak.getKey() > 0)
 				dataOutStream.println("peak-node: " + peak.getKey() + "\t" + peak.getValue());
 		}
 		
@@ -112,7 +115,7 @@ public class LogControl implements Control {
 				total += i;
 			
 			int average = total / avg.getValue().size();
-			if (average > 0)
+			if (average > 0 && avg.getKey() > 0)
 				dataOutStream.println("avg-node: " + avg.getKey() + "\t" + average);
 		}
 	}

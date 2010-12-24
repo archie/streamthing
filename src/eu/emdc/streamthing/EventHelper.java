@@ -9,74 +9,86 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Vector;
 
-
 public class EventHelper {
-	
+
 	int m_numEvents;
-	private int m_eventsReadSoFar = 0;
+	int m_eventsReadSoFar = 0;
 	long m_endTime;
 	private BufferedReader reader;
-	
+
 	Queue<StreamEvent> m_eventQueue = new PriorityQueue<StreamEvent>();
-	
-	public void InitialiseEvents (String eventFile){
-		try
-		{
+
+	public void InitialiseEvents(String eventFile) {
+		try {
 			File file = new File(eventFile);
-			reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-			
+			reader = new BufferedReader(new InputStreamReader(
+					new FileInputStream(file)));
+
 			// Reading from event file. First read event header
 			String line = reader.readLine();
 			String[] firstLine = line.split(" ");
 			m_numEvents = Integer.parseInt(firstLine[0]);
 			m_endTime = Long.parseLong(firstLine[1]);
-			
-			fillQueue(); // fill first time 
-		}
-		catch (Exception e)
-		{
+
+			fillQueue(); // fill first time
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	public StreamEvent poll() {
-		if (m_eventQueue.size() == 0)
-			if (!fillQueue())
-				return null;
-		
+		fillQueue();
+
 		return m_eventQueue.poll();
 	}
-	
+
+	public long getNextTime() {
+		StreamEvent event;
+
+		fillQueue();
+
+		if ((event = m_eventQueue.peek()) == null)
+			return 0;
+		else
+			return (long) event.GetExecutionTime();
+	}
+
 	private boolean fillQueue() {
-		//System.out.println(" filling queue ");
-		String line = null; 
-		StreamEvent newEvent; 
+		if (m_eventQueue.size() > 0)
+			return false;
 		
+		if (m_eventsReadSoFar == m_numEvents)
+			return false;
+
+		//System.out.println(" filling queue ");
+		String line = null;
+		StreamEvent newEvent;
+
 		try {
-			if (m_eventsReadSoFar == m_numEvents)
-			{
-				reader.close();
-				return false;
-			}
-			for (int i = 0;  i < 1000; i++) { // read 1000 events at the time
-				if ((line = reader.readLine()) == null)
-					return false;
-				
+			for (int i = 0; i < 1000; i++) { // read 1000 events at the time
+				if ((line = reader.readLine()) == null) {
+					System.out.println("finished, closing file");
+					// reader.close();
+					break;
+				}
+
 				m_eventsReadSoFar++;
-				
+
 				newEvent = parseLine(line.split(" "));
 				if (newEvent != null) {
 					m_eventQueue.add(newEvent);
 				}
 			}
+
 		} catch (IOException e) {
-			e.printStackTrace();
+			return false;
 		}
-		//System.out.println("events read so far: " + m_eventsReadSoFar);
+		
+		System.out.println(" Events read so far: " + m_eventsReadSoFar);
 		return true;
 	}
-	
+
 	private StreamEvent parseLine(String[] line) {
 		StreamEvent event = new StreamEvent();
 		event.SetExecutionTime(Float.parseFloat(line[0]));
@@ -87,15 +99,15 @@ public class EventHelper {
 		}
 		return event;
 	}
-	
+
 	private Vector<Float> getEventParams(String[] line) {
-		Vector<Float> vect = new Vector<Float> ();
+		Vector<Float> vect = new Vector<Float>();
 		for (int i = 3; i < line.length; i++) {
 			vect.add(Float.parseFloat(line[i]));
 		}
 		return vect;
 	}
-	
+
 	private StreamEventType getEventType(String t) {
 		if (t.equals("J"))
 			return StreamEventType.JOIN;
@@ -109,8 +121,8 @@ public class EventHelper {
 			return StreamEventType.SUBSCRIBE;
 		else if (t.equals("P"))
 			return StreamEventType.PUBLISH;
-		else 
+		else
 			return StreamEventType.TURBULENCE;
 	}
-	
+
 }

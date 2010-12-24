@@ -58,15 +58,15 @@ public class TreeView implements Control {
 			e.printStackTrace();
 		}
 
-		/*
-		 * Iterator<Entry<Integer, NodeWorld>> it =
-		 * StreamThing.m_videoStreamIdToMulticastTreeMap.entrySet().iterator();
-		 * while (it.hasNext()) { Entry<Integer, NodeWorld> w = it.next();
-		 * 
-		 * //printSeparateTree(w.getKey(), w.getValue());
-		 * 
-		 * }
-		 */
+		
+		 Iterator<Entry<Integer, NodeWorld>> it =
+		 StreamThing.m_videoStreamIdToMulticastTreeMap.entrySet().iterator();
+		 while (it.hasNext()) { Entry<Integer, NodeWorld> w = it.next();
+		 
+		 	printSeparateTree(w.getKey(), w.getValue());
+		 
+		 }
+		 
 		return false;
 	}
 
@@ -75,6 +75,9 @@ public class TreeView implements Control {
 			PrintWriter out = new PrintWriter(new File("graphs/" + streamId
 					+ "-" + CommonState.getTime() + ".gv"));
 			out.println("digraph unix { ");
+			out.println("graph [	fontname = \"Verdana\"," +
+					 "fontsize = 30," + 
+					 "label = \"\\n\\n\\nStreamThing\\nPlotting stream " + streamId + " at " + CommonState.getTime() +  "\"];");
 			printChildren(out, w, w.getRootNode(), true);
 			out.println("}");
 			out.close();

@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.Map.Entry;
 
 import eu.emdc.streamthing.stats.Debug;
+import eu.emdc.streamthing.stats.LogControl;
 
 import peersim.config.Configuration;
 import peersim.core.CommonState;
@@ -43,12 +44,23 @@ public class Initialiser implements Control {
 
 	public boolean execute() {
 		StreamEvent event; 
-		if (m_eventsParsed <= eventHelper.m_numEvents-1)
+		
+		if (eventHelper.getNextTime() == 0) {
+			LogControl lc = (LogControl) Configuration.getInstance("control.accounting");
+			lc.execute();
+			return true;
+		}
+		
+		if ((CommonState.getTime() == eventHelper.getNextTime())
+				&& m_eventsParsed < eventHelper.m_numEvents)
 		{
+			//System.out.println("parsing event " + m_eventsParsed + " num events" + eventHelper.m_numEvents);
 			if ((event = eventHelper.poll()) != null) 			
 				m_eventsParsed++;	
 			else 
 				return false;
+			
+			//System.out.println(CommonState.getTime() + " event time " + event.GetExecutionTime());
 			
 			switch (event.GetEventType()) {
 			case JOIN:

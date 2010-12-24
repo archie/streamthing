@@ -233,6 +233,10 @@ public class NodeWorld {
 			
 			m_parentMap.put(newNodeStreamId, bucket);
 			List<Integer> tempvect1 =  m_childrenMap.get (bucket);
+			
+			if (tempvect1 == null)
+				tempvect1 = new ArrayList<Integer>();
+			
 			tempvect1.add(newNodeStreamId);
 			m_childrenMap.put (bucket, tempvect1);
 			

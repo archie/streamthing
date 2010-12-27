@@ -34,14 +34,21 @@
 
   <target name="graphs">
     <mkdir dir="graphs" />
+
     <exec executable="/bin/sh" outputproperty="dropped.data">
       <arg value="-c" />
       <arg value="cat logfile.data | grep dropped | awk '{ print $3, $2 }' | sort -rg &gt; graphs/dropped.data" />
     </exec>
     <exec executable="/bin/sh" outputproperty="packets.data">
       <arg value="-c" />
+      <arg value="cat logfile.data | grep 'dropped-stream' | awk '{ print $2, $3 }' | sort -g &gt; graphs/stream-drops.data" />
+    </exec>
+
+    <exec executable="/bin/sh" outputproperty="packets.data">
+      <arg value="-c" />
       <arg value="cat logfile.data | grep 'packets' | awk '{ print $3, $2 }' | sort -rg &gt; graphs/packets.data" />
     </exec>
+
     <exec executable="/bin/sh">
       <arg value="-c" />
       <arg value="cat logfile.data | grep 'latency-stream' | awk '{ print $2, $3 }' | sort -g &gt; graphs/latency-stream.data" />
@@ -50,6 +57,16 @@
       <arg value="-c" />
       <arg value="cat logfile.data | grep 'latency-node' | awk '{ print $2, $3 }' | sort -rg &gt; graphs/latency-avg.data" />
     </exec>
+
+    <exec executable="/bin/sh">
+      <arg value="-c" />
+      <arg value="cat logfile.data | grep 'jitter-node' | awk '{ print $2, $3 }' | sort -g &gt; graphs/jitter-node.data" />
+    </exec>
+    <exec executable="/bin/sh">
+      <arg value="-c" />
+      <arg value="cat logfile.data | grep 'jitter-stream' | awk '{ print $2, $3 }' | sort -g &gt; graphs/jitter-stream.data" />
+    </exec>
+
     <exec executable="/bin/sh">
       <arg value="-c" />
       <arg value="cat logfile.data | grep 'peak-node' | awk '{ print $3, $2 }' | sort -rg &gt; graphs/peak.data" />
@@ -58,6 +75,7 @@
       <arg value="-c" />
       <arg value="cat logfile.data | grep 'avg-node' | awk '{ print $3, $2 }' | sort -rg &gt; graphs/avg.data" />
     </exec>
+
     <exec executable="/bin/sh">
       <arg line='-c "gnuplot graphs.plot"' />
     </exec>

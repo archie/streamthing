@@ -151,6 +151,7 @@ public class StreamThing implements Cloneable, CDProtocol, EDProtocol {
 			if (m_streamsISubscribeTo.size() == 0) {
 				// System.err.println("WTF Man brrr...");
 				MessageStatistics.droppedNode(m_myStreamNodeId);
+				MessageStatistics.droppedStream(eventMsg.streamId);
 				return;
 			}
 

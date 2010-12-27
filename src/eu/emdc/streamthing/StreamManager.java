@@ -117,8 +117,9 @@ public class StreamManager {
 	private void consumeVideo(Node node, int streamId) {
 		for (VideoMessage msg : m_buffer) {
 			long latency = CommonState.getTime() - msg.sent;
-			MessageStatistics.latencyNode(msg.source, latency);
-			MessageStatistics.latencyStream(streamId, latency);
+			MessageStatistics.logLatencyJitter(streamId, msg.source, latency, CommonState.getTime());
+//			MessageStatistics.latencyNode(msg.source, latency);
+//			MessageStatistics.latencyStream(streamId, latency);
 		}
 		m_buffer.clear();
 	}

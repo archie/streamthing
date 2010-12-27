@@ -3,16 +3,16 @@ set output "graphs/test.png"
 set size 2.0, 2.0
 set multiplot
 
-#packet and drop#
-set title "Packets"
+## Drop per stream ## 
+set title "Packets dropped per stream" 
 set origin 0.0, 0.5
 set size 0.5, 0.5
-set xlabel "Nodes"
+set xlabel "Streams"
 set ylabel "Packets"
 set ytics
 set grid
-plot "graphs/packets.data" using 1 title "packets", \
-     "graphs/dropped.data" using 1 title "dropped"
+plot "graphs/stream-drops.data" u 1:2 title "" 
+
 
 #stream latency#
 reset
@@ -90,3 +90,40 @@ plot "graphs/peak.data" using 1 title "peak", \
 
 unset multiplot
 set size 2.0, 2.0
+
+#packet and drop#
+reset
+set title "Packets sent vs dropped"
+set terminal png small
+set output "graphs/packets.png"
+set xlabel "Nodes"
+set ylabel "Packets"
+set ytics
+set grid
+plot "graphs/dropped.data" using 1 title "dropped", \
+     "graphs/packets.data" using 1 title "packets"
+
+
+#jitter stream#
+reset 
+set title "Average Jitter per stream"
+set terminal png small
+set output "graphs/jitter-stream.png"
+set xlabel "Stream"
+set ylabel "Jitter"
+set ytics
+set grid
+plot "graphs/jitter-stream.data" using 1:2 
+
+#jitter node#
+reset 
+set title "Average Jitter per node"
+set terminal png small
+set output "graphs/jitter-node.png"
+set xlabel "Node"
+set ylabel "Jitter"
+set ytics
+set grid
+plot "graphs/jitter-node.data" using 1:2 
+
+

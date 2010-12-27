@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Storing some statistical data for each node
@@ -26,6 +27,10 @@ public class MessageStatistics {
 	// upload capacity
 	public static Map<Integer, Integer> peakUploadNodeMap = new HashMap<Integer, Integer>();
 	public static Map<Integer, List<Integer>> bandwidthNodeMap = new HashMap<Integer, List<Integer>>();
+	
+	// avg jitter
+	public static Map<Integer, JitterTuple> jitterNodeMap = new HashMap<Integer, JitterTuple>();
+	public static Map<Integer, JitterTuple> jitterStreamMap = new HashMap<Integer, JitterTuple>();
 	
 	public static void latencyNode(int streamNodeId, long time) {
 		if (messageCountMap.containsKey(streamNodeId)) 
@@ -56,6 +61,41 @@ public class MessageStatistics {
 			streamMessageCountMap.put(streamId, 1);
 			latencyStreamMap.put(streamId, time);
 		}
+	}
+	
+	public static void jitterNode(int streamNodeId, long time) {
+		JitterTuple jt = new JitterTuple();
+		if (jitterNodeMap.containsKey(streamNodeId)) {
+			JitterTuple oldJt = jitterNodeMap.get(streamNodeId);
+			jt.time = time - oldJt.time;
+			jt.average = (jt.time + oldJt.average) / 2;
+			jitterNodeMap.put(streamNodeId, jt);
+		} else {
+			jt.time = time; 
+			jt.average = 0;
+			jitterNodeMap.put(streamNodeId, jt);
+		}
+	}
+	
+	public static void jitterStream(int streamId, long time) {
+		JitterTuple jt = new JitterTuple();
+		if (jitterStreamMap.containsKey(streamId)) {
+			JitterTuple oldJt = jitterStreamMap.get(streamId);
+			jt.time = time - oldJt.time;
+			jt.average = (jt.time + oldJt.average) / 2;
+			jitterStreamMap.put(streamId, jt);
+		} else {
+			jt.time = time; 
+			jt.average = 0;
+			jitterStreamMap.put(streamId, jt);
+		}
+	}
+	
+	public static void logLatencyJitter(int streamId, int streamNodeId, long latency, long currentTime) {
+		latencyNode(streamNodeId, latency);
+		latencyStream(streamId, latency);
+		jitterNode(streamNodeId, currentTime);
+		jitterStream(streamId, currentTime);
 	}
 	
 	public static void droppedNode(int streamNodeId) {

@@ -41,6 +41,7 @@ public class LogControl implements Control {
 			
 			// packets 
 			printPackets(dataOutStream);
+			printDroppedPerStream(dataOutStream);
 			
 			// latency
 			printLatency(dataOutStream);
@@ -120,40 +121,33 @@ public class LogControl implements Control {
 		}
 	}
 	
-	private void printJitter(PrintWriter dataOutStream) {
-		int network_node_mean = 0;
-		int network_stream_mean = 0;
-		Iterator<Entry<Integer, Long>> latencies;
-		//List<Double> jitter = new ArrayList<Double>();
+	private void printDroppedPerStream(PrintWriter dataOutStream) {
 		
-		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
-		while (latencies.hasNext()) {
-			Entry<Integer, Long> latencyEntry = latencies.next();
-			network_node_mean += latencyEntry.getValue();
+		Iterator<Entry<Integer, Integer>> drops = MessageStatistics.droppedStreamMap.entrySet().iterator();
+		while (drops.hasNext()) {
+			Entry<Integer, Integer> dropEntry = drops.next();
+			if (dropEntry.getValue() > 0 && dropEntry.getKey() >= 0)
+				dataOutStream.println("dropped-stream: " + dropEntry.getKey() + "\t" + dropEntry.getValue());
 		}
 		
-		network_node_mean = network_node_mean/MessageStatistics.latencyNodeMap.size();
-		
-		latencies = MessageStatistics.latencyNodeMap.entrySet().iterator();
-		while (latencies.hasNext()) {
-			Entry<Integer, Long> latencyEntry = latencies.next();
-			dataOutStream.println("jitter-node: " + latencyEntry.getKey() + "\t" + Math.abs(latencyEntry.getValue()-network_node_mean));
+	}
+	
+	// not used
+	private void printJitter(PrintWriter dataOutStream) {
+		Iterator<Entry<Integer, JitterTuple>> jitters;
+
+		jitters = MessageStatistics.jitterNodeMap.entrySet().iterator();
+		while (jitters.hasNext()) {
+			Entry<Integer, JitterTuple> jitterEntry = jitters.next();
+			dataOutStream.println("jitter-node: " + jitterEntry.getKey() + "\t" + jitterEntry.getValue().average);
 		}
 		
 		// -----
 		
-		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
-		while (latencies.hasNext()) {
-			Entry<Integer, Long> latencyEntry = latencies.next();
-			network_stream_mean += latencyEntry.getValue();
-		}
-		
-		network_stream_mean = network_stream_mean/MessageStatistics.latencyStreamMap.size();
-		
-		latencies = MessageStatistics.latencyStreamMap.entrySet().iterator();
-		while (latencies.hasNext()) {
-			Entry<Integer, Long> latencyEntry = latencies.next();
-			dataOutStream.println("jitter-stream: " + latencyEntry.getKey() + "\t" + Math.abs(latencyEntry.getValue()-network_stream_mean));
+		jitters = MessageStatistics.jitterStreamMap.entrySet().iterator();
+		while (jitters.hasNext()) {
+			Entry<Integer, JitterTuple> jitterEntry = jitters.next();
+			dataOutStream.println("jitter-stream: " + jitterEntry.getKey() + "\t" + jitterEntry.getValue().average);
 		}
 		
 	}

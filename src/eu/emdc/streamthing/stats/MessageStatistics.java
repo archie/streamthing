@@ -64,29 +64,78 @@ public class MessageStatistics {
 	}
 	
 	public static void jitterNode(int streamNodeId, long time) {
+		// J(N) = (J(N-1) * (N - 1) + LatestDifference) / N
+		long latestDifference;
 		JitterTuple jt = new JitterTuple();
 		if (jitterNodeMap.containsKey(streamNodeId)) {
 			JitterTuple oldJt = jitterNodeMap.get(streamNodeId);
-			jt.time = time - oldJt.time;
-			jt.average = (jt.time + oldJt.average) / 2;
+			
+			if (oldJt.sampleNumber >= 2) 
+			{
+				latestDifference = Math.abs(oldJt.lastTime - time);
+				jt.sampleNumber = oldJt.sampleNumber + 1;
+				jt.lastJitter = (oldJt.lastJitter * (jt.sampleNumber-1) + latestDifference) / jt.sampleNumber;
+				jt.lastTime = time;
+			} 
+			else 
+			{
+				if (oldJt.sampleNumber == 1) {
+					//J1 = (X + Y)/2
+					latestDifference = Math.abs(jt.lastTime - time);
+					jt.lastJitter = (jt.intermediary + latestDifference) / 2;
+					jt.lastTime = time;
+					jt.sampleNumber = 2;
+				} else {
+					latestDifference = Math.abs(oldJt.lastTime - time);
+					jt.lastTime = time;
+					jt.intermediary = latestDifference;
+					jt.sampleNumber = 1;
+				}
+			}
 			jitterNodeMap.put(streamNodeId, jt);
 		} else {
-			jt.time = time; 
-			jt.average = 0;
+			jt.lastTime = time;
+			jt.lastJitter = -1;
+			jt.sampleNumber = 0;
+			jt.intermediary = -1;
 			jitterNodeMap.put(streamNodeId, jt);
 		}
 	}
 	
 	public static void jitterStream(int streamId, long time) {
+		long latestDifference;
 		JitterTuple jt = new JitterTuple();
 		if (jitterStreamMap.containsKey(streamId)) {
 			JitterTuple oldJt = jitterStreamMap.get(streamId);
-			jt.time = time - oldJt.time;
-			jt.average = (jt.time + oldJt.average) / 2;
+			
+			if (oldJt.sampleNumber >= 2) 
+			{
+				latestDifference = Math.abs(oldJt.lastTime - time);
+				jt.sampleNumber = oldJt.sampleNumber + 1;
+				jt.lastJitter = (oldJt.lastJitter * (jt.sampleNumber-1) + latestDifference) / jt.sampleNumber;
+				jt.lastTime = time;
+			} 
+			else 
+			{
+				if (oldJt.sampleNumber == 1) {
+					//J1 = (X + Y)/2
+					latestDifference = Math.abs(jt.lastTime - time);
+					jt.lastJitter = (jt.intermediary + latestDifference) / 2;
+					jt.lastTime = time;
+					jt.sampleNumber = 2;
+				} else {
+					latestDifference = Math.abs(oldJt.lastTime - time);
+					jt.lastTime = time;
+					jt.intermediary = latestDifference;
+					jt.sampleNumber = 1;
+				}
+			}
 			jitterStreamMap.put(streamId, jt);
 		} else {
-			jt.time = time; 
-			jt.average = 0;
+			jt.lastTime = time;
+			jt.lastJitter = -1;
+			jt.sampleNumber = 0;
+			jt.intermediary = -1;
 			jitterStreamMap.put(streamId, jt);
 		}
 	}

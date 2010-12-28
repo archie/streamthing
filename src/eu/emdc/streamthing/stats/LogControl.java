@@ -139,7 +139,7 @@ public class LogControl implements Control {
 		jitters = MessageStatistics.jitterNodeMap.entrySet().iterator();
 		while (jitters.hasNext()) {
 			Entry<Integer, JitterTuple> jitterEntry = jitters.next();
-			dataOutStream.println("jitter-node: " + jitterEntry.getKey() + "\t" + jitterEntry.getValue().average);
+			dataOutStream.println("jitter-node: " + jitterEntry.getKey() + "\t" + jitterEntry.getValue().lastJitter);
 		}
 		
 		// -----
@@ -147,7 +147,7 @@ public class LogControl implements Control {
 		jitters = MessageStatistics.jitterStreamMap.entrySet().iterator();
 		while (jitters.hasNext()) {
 			Entry<Integer, JitterTuple> jitterEntry = jitters.next();
-			dataOutStream.println("jitter-stream: " + jitterEntry.getKey() + "\t" + jitterEntry.getValue().average);
+			dataOutStream.println("jitter-stream: " + jitterEntry.getKey() + "\t" + jitterEntry.getValue().lastJitter);
 		}
 		
 	}

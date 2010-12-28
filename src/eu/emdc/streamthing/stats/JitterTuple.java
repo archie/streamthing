@@ -1,8 +1,8 @@
 package eu.emdc.streamthing.stats;
 
 public class JitterTuple {
-	public long lastJitter;
+	public float lastJitter;
 	public long lastTime;
 	public int sampleNumber;
-	public long intermediary;
+	public float intermediary;
 }

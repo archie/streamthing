@@ -72,9 +72,10 @@ public class MessageStatistics {
 			
 			if (oldJt.sampleNumber >= 2) 
 			{
+				
 				latestDifference = Math.abs(oldJt.lastTime - time);
 				jt.sampleNumber = oldJt.sampleNumber + 1;
-				jt.lastJitter = (oldJt.lastJitter * (jt.sampleNumber-1) + latestDifference) / jt.sampleNumber;
+				jt.lastJitter = (float) (oldJt.lastJitter * (jt.sampleNumber-1) + latestDifference) / (float) jt.sampleNumber;
 				jt.lastTime = time;
 			} 
 			else 

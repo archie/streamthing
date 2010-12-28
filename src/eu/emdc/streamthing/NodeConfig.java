@@ -7,7 +7,7 @@ import java.io.*;
 
 public class NodeConfig {
 
-	private static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > (2000);
+	private static Map<Integer, Map<Integer, DelayTuple> > latencyMap = new HashMap<Integer, Map<Integer, DelayTuple> > ();
 	private static Map<Integer, Float > uploadCapacityMap =  new HashMap <Integer, Float> ();
 
 	private static int m_numNodes; // Being re-used. No consequences I guess - Lalith
@@ -15,39 +15,44 @@ public class NodeConfig {
 	public static void InitialiseLatencyMap (String configFile){
 		try
 		{
-			Scanner scanner = new Scanner (new File(configFile));
+			BufferedReader scanner = new BufferedReader(new FileReader(configFile));
 			
-			if (scanner.hasNextInt())
-			{
-				m_numNodes = scanner.nextInt();
-			}
+			String firstline = scanner.readLine ();
+			
+			String [] fields = firstline.split(" +");
+			
+			m_numNodes = new Integer (fields[0]);
 			
 			int N = m_numNodes * (m_numNodes - 1); // Number of combinations
-			int minDelay;
-			int maxDelay;
-			int nodeA;
-			int nodeB;
+			
+			firstline = null;
+			fields = null;
+			
 			while (N > 0){
 				
-				nodeA = scanner.nextInt ();
-				nodeB = scanner.nextInt ();
-				minDelay = scanner.nextInt ();
-				maxDelay = scanner.nextInt ();
-				Map< Integer, DelayTuple > innerMap;
-				if (latencyMap.containsKey(nodeA))
-				{
-					innerMap = latencyMap.get (nodeA);
-				}
-				else
-				{
-					innerMap = new HashMap<Integer, DelayTuple> (2000);
-				}
+				
+
+				String [] delayfields = scanner.readLine().split(" +");
+							
+				Integer nodeA = new Integer (delayfields[0]);
+				Integer nodeB = new Integer (delayfields[1]);
+				Integer minDelay = new Integer (delayfields[2]);
+				Integer maxDelay = new Integer (delayfields[3]);
+				
 				DelayTuple delayTup = new DelayTuple();
 				delayTup.SetMinDelay(minDelay);
 				delayTup.SetMaxDelay(maxDelay);
-				innerMap.put(nodeB, delayTup);
 				
-				latencyMap.put(nodeA, innerMap);
+				if (latencyMap.containsKey(nodeA))
+				{
+					latencyMap.get (nodeA).put (nodeB, delayTup);
+				}
+				else
+				{
+					Map< Integer, DelayTuple > innerMap = null;
+					innerMap = new HashMap<Integer, DelayTuple> ();
+					latencyMap.put(nodeA, innerMap);
+				}
 				
 				N--;
 			}
